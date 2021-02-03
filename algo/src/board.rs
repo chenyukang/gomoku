@@ -23,6 +23,9 @@ impl Board {
                 rows.len()
             );
         }
+        if width < 5 && height < 5 { 
+            panic!("Width or height must larger than")
+        }
         Self {
             width: width,
             height: height,
@@ -128,20 +131,16 @@ mod tests {
 
     #[test]
     fn test_board_create() {
-        let board = Board::new(String::from("12"), 1, 2);
+        let board = Board::new(String::from("121211"), 1, 6);
         assert_eq!(board.width, 1);
-        assert_eq!(board.height, 2);
+        assert_eq!(board.height, 6);
     }
 
     #[test]
     fn test_board_from_string() {
-        let mut board = Board::from(String::from("1212"));
-        assert_eq!(board.width, 2);
-        assert_eq!(board.height, 2);
-
-        board = Board::from(String::from("121121120"));
-        assert_eq!(board.width, 3);
-        assert_eq!(board.height, 3);
+        let board = Board::from(String::from("1212112121121211212112121"));
+        assert_eq!(board.width, 5);
+        assert_eq!(board.height, 5);
     }
 
     #[test]
@@ -158,11 +157,11 @@ mod tests {
 
     #[test]
     fn test_board_elements() {
-        let board = Board::new(String::from("000112"), 3, 2);
+        let board = Board::new(String::from("000112000112"), 6, 2);
         assert_eq!(board.digits[0][0], 0);
         assert_eq!(board.digits[0][1], 0);
-        assert_eq!(board.digits[1][0], 1);
-        assert_eq!(board.digits[1][2], 2);
+        assert_eq!(board.digits[1][4], 1);
+        assert_eq!(board.digits[1][5], 2);
     }
 
     #[test]
