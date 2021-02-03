@@ -1,16 +1,18 @@
 use clap::clap_app;
 mod board;
+mod server;
 
 fn main() {
     let matches = clap_app!(myapp =>
         (version: "0.1")
         (author: "yukang <moorekang@gmail.com>")
         (about: "Algo backend for Gomoku")
-        (@arg INPUT: +required "Current board of gomoku")
+        (@arg input: -i --input +takes_value "Current board of gomoku")
         (@arg verbose: -v --verbose "Print version information verbosely")
         (@arg width: -w --width +takes_value "The board width")      
         (@arg height: -h --height +takes_value "The board height")  
         (@arg depth: -d --depth +takes_value "The search depth for algo")
+        (@arg server: -s --server "Run in Server mode")
     ).get_matches();
 
     let mut search_depth = 14;
@@ -29,11 +31,18 @@ fn main() {
         board_height = height.parse::<usize>().unwrap();
     }
 
-    let input = matches.value_of("INPUT").unwrap();
-    println!("board: {}", input);
+    if matches.occurrences_of("server") > 0 {
+        let _ = server::run_server();
+    } else {
+         if let Some(input) = matches.value_of("input") { 
+            println!("board: {}", input);
 
-    let board = board::Board::new(input.to_string(), board_width, board_height);
+            let board = board::Board::new(input.to_string(), board_width, board_height);
 
-    println!("search depth: {}", search_depth);
-    println!("board: {:?}", board);
+             println!("search depth: {}", search_depth);
+             println!("board: {:?}", board);
+         } else { 
+          panic!("Input board is required");
+         }
+    }
 }
