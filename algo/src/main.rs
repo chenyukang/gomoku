@@ -2,7 +2,6 @@ use clap::clap_app;
 mod board;
 
 fn main() {
-    println!("max: {}, min: {}", u8::MAX, u8::MIN);
     let matches = clap_app!(myapp =>
         (version: "0.1")
         (author: "yukang <moorekang@gmail.com>")

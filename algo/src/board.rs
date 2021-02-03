@@ -8,12 +8,10 @@ pub struct Board {
 
 impl Board { 
     pub fn new(input: String, width: usize, height: usize) -> Self {
-        let rows: Vec<u8> = input.chars().map(|e| e as u8 - '0' as u8).collect();
+        let rows: Vec<u8> = input.chars().filter(|&e| e == '0' || e == '1' || e == '2')
+                            .map(|e| e as u8 - '0' as u8).collect();
         if rows.len() != width * height {
             panic!("Invalid board size with {}*{} <> {}", width, height, rows.len());
-        }
-        if rows.iter().any(|&x| x != 0 && x != 1 && x != 2) {
-            panic!("Invalid input: {:?}", rows);
         }
         let res = Self { 
             width: width,
@@ -122,12 +120,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_board_invalid_element() {
-        Board::new(String::from("1234"), 2, 2);
-    }
-
-    #[test]
     fn test_board_elements() {
         let board = Board::new(String::from("000112"), 3, 2);
         assert_eq!(board.digits[0][0], 0);
@@ -155,6 +147,23 @@ mod tests {
 
         board = Board::new(String::from("1111011110111100111010000"), 5, 5);
         assert_eq!(board.check(), None);
+
+        board = Board::new(String::from("10000 01000 00100 00010 00001"), 5, 5);
+        assert_eq!(board.check(), Some(1));
+
+        board = Board::new(String::from("10000 01000 00000 00010 00001"), 5, 5);
+        assert_eq!(board.check(), None);
+
+        board = Board::new(String::from("22220 10000 01000 00100 00010 00001"), 5, 6);
+        assert_eq!(board.check(), Some(1));
+
+
+        board = Board::new(String::from("22220 00001 00010 00100 01000 10000"), 5, 6);
+        assert_eq!(board.check(), Some(1));
+
+
+        board = Board::new(String::from("22222 00001 00010 00100 01000 10000"), 5, 6);
+        assert_eq!(board.check(), Some(2));
 
 
     }
