@@ -22,6 +22,20 @@ impl Board {
         }
     }
 
+    pub fn from(input: String) -> Self { 
+        let len = input.len();
+        let width = (len as f64).sqrt() as usize;
+        let height = width;
+        if width * height != len { 
+            panic!("Invalid input string size");
+        }
+        Board::new(input, width, height)
+    }
+
+    pub fn calculate_move(&self) -> String { 
+        String::from("Move result")
+    }
+
     fn check(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
@@ -110,6 +124,25 @@ mod tests {
         assert_eq!(board.width, 1);
         assert_eq!(board.height, 2);
     }
+
+    #[test]
+    fn test_board_from_string() { 
+        let mut board = Board::from(String::from("1212"));
+        assert_eq!(board.width, 2);
+        assert_eq!(board.height, 2);
+
+        board = Board::from(String::from("121121120"));
+        assert_eq!(board.width, 3);
+        assert_eq!(board.height, 3);
+    }
+
+
+    #[test]
+    #[should_panic(expected = "Invalid input string size")]
+    fn test_board_from_string_panic() { 
+        let _ =  Board::from(String::from("12123"));
+    }
+
 
     #[test]
     #[should_panic(expected = "Invalid board size with 2*2 <> 2")]

@@ -35,12 +35,8 @@ fn main() {
         let _ = server::run_server();
     } else {
          if let Some(input) = matches.value_of("input") { 
-            println!("board: {}", input);
-
             let board = board::Board::new(input.to_string(), board_width, board_height);
-
-             println!("search depth: {}", search_depth);
-             println!("board: {:?}", board);
+            print!("created board: {:?} with depth: {}", board, search_depth);
          } else { 
           panic!("Input board is required");
          }
