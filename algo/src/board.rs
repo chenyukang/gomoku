@@ -5,34 +5,42 @@
 pub struct Board {
     width: usize,
     height: usize,
-    digits: Vec<Vec<u8>>
+    digits: Vec<Vec<u8>>,
 }
 
-impl Board { 
+impl Board {
     pub fn new(input: String, width: usize, height: usize) -> Self {
-        let rows: Vec<u8> = input.chars().filter(|&e| e == '0' || e == '1' || e == '2')
-                            .map(|e| e as u8 - '0' as u8).collect();
+        let rows: Vec<u8> = input
+            .chars()
+            .filter(|&e| e == '0' || e == '1' || e == '2')
+            .map(|e| e as u8 - '0' as u8)
+            .collect();
         if rows.len() != width * height {
-            panic!("Invalid board size with {}*{} <> {}", width, height, rows.len());
+            panic!(
+                "Invalid board size with {}*{} <> {}",
+                width,
+                height,
+                rows.len()
+            );
         }
-        Self { 
+        Self {
             width: width,
             height: height,
-            digits: rows.chunks(width).map(|x| x.to_vec() ).collect()
+            digits: rows.chunks(width).map(|x| x.to_vec()).collect(),
         }
     }
 
-    pub fn from(input: String) -> Self { 
+    pub fn from(input: String) -> Self {
         let len = input.len();
         let width = (len as f64).sqrt() as usize;
         let height = width;
-        if width * height != len { 
+        if width * height != len {
             panic!("Invalid input string size");
         }
         Board::new(input, width, height)
     }
 
-    pub fn calculate_move(&self) -> String { 
+    pub fn calculate_move(&self) -> String {
         String::from("Move result")
     }
 
@@ -61,14 +69,14 @@ impl Board {
                 if col_count >= 5 {
                     return Some(role);
                 }
-            } else { 
+            } else {
                 break;
             }
         }
         for j in col..self.width {
             if self.digits[row][j] == role {
                 row_count += 1;
-                if row_count >= 5 { 
+                if row_count >= 5 {
                     return Some(role);
                 }
             } else {
@@ -109,8 +117,8 @@ impl Board {
         None
     }
 
-    fn valid_pos(&self, row: i32, col: i32) -> bool { 
-        return row >= 0 && row < self.height as i32 && col >= 0 && col < self.width as i32;
+    fn valid_pos(&self, row: i32, col: i32) -> bool {
+        row >= 0 && row < self.height as i32 && col >= 0 && col < self.width as i32
     }
 }
 
@@ -126,7 +134,7 @@ mod tests {
     }
 
     #[test]
-    fn test_board_from_string() { 
+    fn test_board_from_string() {
         let mut board = Board::from(String::from("1212"));
         assert_eq!(board.width, 2);
         assert_eq!(board.height, 2);
@@ -136,13 +144,11 @@ mod tests {
         assert_eq!(board.height, 3);
     }
 
-
     #[test]
     #[should_panic(expected = "Invalid input string size")]
-    fn test_board_from_string_panic() { 
-        let _ =  Board::from(String::from("12123"));
+    fn test_board_from_string_panic() {
+        let _ = Board::from(String::from("12123"));
     }
-
 
     #[test]
     #[should_panic(expected = "Invalid board size with 2*2 <> 2")]
@@ -188,14 +194,11 @@ mod tests {
         board = Board::new(String::from("22220 10000 01000 00100 00010 00001"), 5, 6);
         assert_eq!(board.check(), Some(1));
 
-
         board = Board::new(String::from("22220 00001 00010 00100 01000 10000"), 5, 6);
         assert_eq!(board.check(), Some(1));
 
-
         board = Board::new(String::from("22222 00001 00010 00100 01000 10000"), 5, 6);
         assert_eq!(board.check(), Some(2));
-
 
         board = Board::new(String::from("10000 10001 01021 00001 00001 00001"), 5, 6);
         assert_eq!(board.check(), Some(1));

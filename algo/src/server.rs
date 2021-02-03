@@ -3,9 +3,9 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 
+use super::board;
 use std::collections::HashMap;
 use url::*;
-use super::board;
 
 async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     match (req.method(), req.uri().path()) {
