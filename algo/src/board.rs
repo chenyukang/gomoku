@@ -166,5 +166,9 @@ mod tests {
         assert_eq!(board.check(), Some(2));
 
 
+        board = Board::new(String::from("10000 10001 01021 00001 00001 00001"), 5, 6);
+        assert_eq!(board.check(), Some(1));
+
+
     }
 }
