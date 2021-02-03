@@ -13,21 +13,17 @@ impl Board {
         if rows.len() != width * height {
             panic!("Invalid board size with {}*{} <> {}", width, height, rows.len());
         }
-        let res = Self { 
+        Self { 
             width: width,
             height: height,
             digits: rows.chunks(width).map(|x| x.to_vec() ).collect()
-        };
-        let current = res.check();
-        println!("element: {}", res.digits[0][0]);
-        println!("current: {:?}", current);
-        res
+        }
     }
 
     fn check(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
-                println!("{} {} => {}", i, j, self.digits[i][j]);
+                //println!("{} {} => {}", i, j, self.digits[i][j]);
                 if let Some(role) = self.check_pos(i, j, 1) {
                     return Some(role);
                 }
@@ -168,7 +164,5 @@ mod tests {
 
         board = Board::new(String::from("10000 10001 01021 00001 00001 00001"), 5, 6);
         assert_eq!(board.check(), Some(1));
-
-
     }
 }
