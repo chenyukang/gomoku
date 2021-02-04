@@ -83,6 +83,7 @@ impl Board {
 
         i = row as i32;
         j = col as i32;
+        angle_count = 0;
         loop {
             if self.valid_pos(i, j) && self.digits[i as usize][j as usize] == role {
                 angle_count += 1;
@@ -142,5 +143,19 @@ mod tests {
 
         board = Board::new(String::from("1111000000"), 5, 2);
         assert_eq!(board.check(), None);
+
+        board = Board::new(String::from("1111022222"), 5, 2);
+        assert_eq!(board.check(), Some(2));
+
+        board = Board::new(String::from("111101111011110"), 5, 3);
+        assert_eq!(board.check(), None);
+
+        board = Board::new(String::from("1111011110111101111010000"), 5, 5);
+        assert_eq!(board.check(), Some(1));
+
+        board = Board::new(String::from("1111011110111100111010000"), 5, 5);
+        assert_eq!(board.check(), None);
+
+
     }
 }
