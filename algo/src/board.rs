@@ -134,4 +134,13 @@ mod tests {
         assert_eq!(board.digits[1][0], 1);
         assert_eq!(board.digits[1][2], 2);
     }
+
+    #[test]
+    fn test_board_check() {
+        let mut board = Board::new(String::from("1111100000"), 5, 2);
+        assert_eq!(board.check(), Some(1));
+
+        board = Board::new(String::from("1111000000"), 5, 2);
+        assert_eq!(board.check(), None);
+    }
 }
