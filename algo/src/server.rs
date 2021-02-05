@@ -21,7 +21,7 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
                 .unwrap_or_else(HashMap::new);
             let input = params.get("input").unwrap();
             let board = board::Board::from(input.to_string());
-            let move_ans = board.calculate_move();
+            let move_ans = board.gen_move();
             Ok(Response::new(move_ans.into()))
         }
         (&Method::GET, "/") | (&Method::GET, "/post") => Ok(Response::new("status".into())),

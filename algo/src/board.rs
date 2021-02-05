@@ -1,6 +1,8 @@
 #![allow(dead_code)]
-#[derive(Debug)]
 
+
+
+#[derive(Debug)]
 pub struct Board {
     width: usize,
     height: usize,
@@ -42,81 +44,66 @@ impl Board {
         Board::new(input, width, height)
     }
 
-    pub fn calculate_move(&self) -> String {
+    pub fn gen_move(&self) -> String {
         String::from("Move result")
     }
 
     fn check(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
-                //println!("{} {} => {}", i, j, self.digits[i][j]);
-                if let Some(role) = self.check_pos(i, j, 1) {
-                    return Some(role);
-                }
-                if let Some(role) = self.check_pos(i, j, 2) {
-                    return Some(role);
+                for p in 1..3 { 
+                    for k in 0..4 { 
+                        let count = self.try_eval_pos(p, i, j, k);
+                        if count >= 5 {
+                            return Some(p);
+                        }
+                    }
                 }
             }
         }
         None
     }
 
-    fn check_pos(&self, row: usize, col: usize, role: u8) -> Option<u8> {
-        let mut row_count = 0;
-        let mut col_count = 0;
-        let mut angle_count = 0;
-        for i in row..self.height {
-            if self.digits[i][col] == role {
-                col_count += 1;
-                if col_count >= 5 {
-                    return Some(role);
+    fn eval(&self, player: u8) -> u32 { 
+        let mut score: u32 = 0;
+        for i in 0..self.height { 
+            for j in 0..self.width { 
+                for k in 0..4 { 
+                    score += self.try_eval_pos(player, i, j, k);
                 }
-            } else {
-                break;
             }
         }
-        for j in col..self.width {
-            if self.digits[row][j] == role {
-                row_count += 1;
-                if row_count >= 5 {
-                    return Some(role);
-                }
-            } else {
-                break;
-            }
-        }
+        return score;
+    }
 
+    fn try_eval_pos(&self, player: u8, row: usize, col: usize, dir: usize) -> u32 { 
+        let dirs = vec![vec![0, 1], vec![1, 0], vec![1, 1], vec![-1, 1]];
+        let cur = &dirs[dir];
         let mut i = row as i32;
         let mut j = col as i32;
-        loop {
-            if self.valid_pos(i, j) && self.digits[i as usize][j as usize] == role {
-                angle_count += 1;
-                i += 1;
-                j += 1;
-                if angle_count >= 5 {
-                    return Some(role);
+        let mut count = 0;
+        loop { 
+            if let Some(p) = self.get(i, j) { 
+                if p != player {
+                    break
+                } else {
+                    count += 1;
+                    i += cur[0];
+                    j += cur[1];
                 }
-            } else {
+            } else { 
                 break;
             }
         }
+        count
+    }
 
-        i = row as i32;
-        j = col as i32;
-        angle_count = 0;
-        loop {
-            if self.valid_pos(i, j) && self.digits[i as usize][j as usize] == role {
-                angle_count += 1;
-                i += 1;
-                j -= 1;
-                if angle_count >= 5 {
-                    return Some(role);
-                }
-            } else {
-                break;
-            }
+    fn get(&self, row: i32, col: i32) -> Option<u8> { 
+        if !self.valid_pos(row, col) {
+            None
+        } else {
+            Some(self.digits[row as usize][col as usize])
         }
-        None
     }
 
     fn valid_pos(&self, row: i32, col: i32) -> bool {
