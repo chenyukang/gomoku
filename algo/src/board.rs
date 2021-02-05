@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use std::cmp;
 
 #[derive(Debug)]
 pub struct Board {
@@ -9,13 +10,13 @@ pub struct Board {
 
 #[derive(Debug)]
 struct Line {
-    count: usize,
+    count: u32,
     hole_count: i32,
     open_count: i32,
 }
 
 impl Line {
-    pub fn new(count: usize, hole_count: i32, open_count: i32) -> Self {
+    pub fn new(count: u32, hole_count: i32, open_count: i32) -> Self {
         Line {
             count: count,
             hole_count: hole_count,
@@ -36,6 +37,7 @@ impl Line {
             (4, 0, 1) => 1500,
             (4, 1, 2) => 2000,
             (4, 1, 0) => 800,
+            (4, 1, 1) => 1000,
             (3, 0, 2) => 1000,
             (3, 0, 1) => 500,
             (3, 1, 2) => 400,
@@ -92,7 +94,7 @@ impl Board {
             for j in 0..self.width {
                 for p in 1..3 {
                     for k in 0..4 {
-                        let (count, _) = self.count_pos(p, i, j, k);
+                        let (count, _, _) = self.count_pos(p, i, j, k, 0);
                         if count >= 5 {
                             return Some(p);
                         }
@@ -109,21 +111,21 @@ impl Board {
             for j in 0..self.width {
                 for k in 0..4 {
                     score += 0;
-                    let line = self.make_line(player, i, j, k);
-                    score += line.score();
+                    let line1 = self.make_line(player, i, j, k, 0);
+                    let line2 = self.make_line(player, i, j, k, 1);
+                    let score1 = line1.score();
+                    let score2 = line2.score();
+                    score += cmp::max(score1, score2);
                 }
             }
         }
         return score;
     }
 
-    fn make_line(&self, player: u8, row: usize, col: usize, dir: usize) -> Line {
-        let mut line = Line::new(0, 0, 0);
-        let rev_dirs = vec![vec![0, -1], vec![-1, 0], vec![-1, -1], vec![1, -1]];
-        let p_row = row as i32 + rev_dirs[dir][0];
-        let p_col = col as i32 + rev_dirs[dir][1];
+    fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
+        let line = Line::new(0, 0, 0);
         let mut open_count = 2;
-        if let Some(prev) = self.get(p_row, p_col) {
+        if let Some(prev) = self.get_prev(row as i32, col as i32, dir) {
             if prev == player {
                 // this position has been evaled
                 return line;
@@ -135,7 +137,7 @@ impl Board {
             //prev position can not be placed
             open_count -= 1;
         }
-        let (count, end_pos) = self.count_pos(player, row, col, dir);
+        let (count, hole_count, end_pos) = self.count_pos(player, row, col, dir, allow_hole);
         if let Some(p) = end_pos {
             if p != 0 && p != player {
                 //end position can not be placed
@@ -144,33 +146,44 @@ impl Board {
         } else {
             open_count -= 1;
         }
-        line.count = count as usize;
-        line.open_count = open_count;
-        return line;
+        Line::new(count, hole_count, open_count)
     }
 
-    fn count_pos(&self, player: u8, row: usize, col: usize, dir: usize) -> (u32, Option<u8>) {
+    fn count_pos(
+        &self,
+        player: u8,
+        row: usize,
+        col: usize,
+        dir: usize,
+        allow_hole: i32,
+    ) -> (u32, i32, Option<u8>) {
         let dirs = vec![vec![0, 1], vec![1, 0], vec![1, 1], vec![-1, 1]];
         let cur = &dirs[dir];
         let mut i = row as i32;
         let mut j = col as i32;
         let mut count = 0;
         let mut next_pos = None;
+        let mut hole_count = allow_hole;
         loop {
-            if let Some(p) = self.get(i, j) {
-                if p != player {
-                    next_pos = Some(p);
-                    break;
-                } else {
-                    count += 1;
-                    i += cur[0];
-                    j += cur[1];
+            let nxt = self.get(i, j);
+            if nxt == Some(player) || (count > 0 && hole_count > 0 && nxt == Some(0)) {
+                count += 1;
+                i += cur[0];
+                j += cur[1];
+                if nxt == Some(0) {
+                    hole_count -= 1;
                 }
+            } else if nxt.is_none() {
+                break;
             } else {
+                next_pos = nxt;
                 break;
             }
         }
-        (count, next_pos)
+        if allow_hole > 0 && hole_count == 0 && self.get_prev(i, j, dir) != Some(player) {
+            count -= 1;
+        }
+        (count, allow_hole - hole_count, next_pos)
     }
 
     fn get(&self, row: i32, col: i32) -> Option<u8> {
@@ -179,6 +192,13 @@ impl Board {
         } else {
             Some(self.digits[row as usize][col as usize])
         }
+    }
+
+    fn get_prev(&self, row: i32, col: i32, dir: usize) -> Option<u8> {
+        let rev_dirs = vec![vec![0, -1], vec![-1, 0], vec![-1, -1], vec![1, -1]];
+        let p_row = row as i32 + rev_dirs[dir][0];
+        let p_col = col as i32 + rev_dirs[dir][1];
+        self.get(p_row, p_col)
     }
 
     fn valid_pos(&self, row: i32, col: i32) -> bool {
@@ -291,5 +311,17 @@ mod tests {
 
         board = Board::new(String::from("10000 01000 00100 00000"), 5, 4);
         assert_eq!(board.eval(1), 500);
+
+        board = Board::new(String::from("10000 01100 00100 00000"), 5, 4);
+        assert_eq!(board.eval(1), 660);
+
+        board = Board::new(String::from("00000 01110 01110 01110 00000"), 5, 5);
+        assert_eq!(board.eval(1), 8320);
+
+        board = Board::new(String::from("101100 000000"), 6, 2);
+        assert_eq!(board.eval(1), 1080);
+
+        board = Board::new(String::from("101110 000000"), 6, 2);
+        assert_eq!(board.eval(1), 2000);
     }
 }
