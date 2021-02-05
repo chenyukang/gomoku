@@ -98,7 +98,8 @@ impl Board {
                     continue;
                 }
                 self.place(i, j, player);
-                let (score, _, _) = self.gen_move(player, depth - 1);
+                let next_player = if player == 1 { 2 } else { 1 };
+                let (score, _, _) = self.gen_move(next_player, depth - 1);
                 if score > max_score {
                     max_score = score;
                     move_x = i;
