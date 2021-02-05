@@ -85,8 +85,29 @@ impl Board {
         Board::new(input, width, height)
     }
 
-    pub fn gen_move(&self) -> String {
-        String::from("Move result")
+    pub fn gen_move(&mut self, player: u8, depth: i32) -> (u32, usize, usize) {
+        if depth == 0 {
+            return (self.eval(player), 0, 0);
+        }
+        let mut max_score = std::u32::MIN;
+        let mut move_x = 0;
+        let mut move_y = 0;
+        for i in 0..self.height {
+            for j in 0..self.width {
+                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
+                    continue;
+                }
+                self.place(i, j, player);
+                let (score, _, _) = self.gen_move(player, depth - 1);
+                if score > max_score {
+                    max_score = score;
+                    move_x = i;
+                    move_y = j;
+                }
+                self.place(i, j, 0);
+            }
+        }
+        (max_score, move_x, move_y)
     }
 
     fn any_winner(&self) -> Option<u8> {
@@ -203,6 +224,32 @@ impl Board {
 
     fn valid_pos(&self, row: i32, col: i32) -> bool {
         row >= 0 && row < self.height as i32 && col >= 0 && col < self.width as i32
+    }
+
+    fn place(&mut self, row: usize, col: usize, player: u8) {
+        self.digits[row][col] = player
+    }
+
+    fn is_remote_cell(&self, row: usize, col: usize) -> bool {
+        let dirs = vec![
+            vec![0, 1],
+            vec![1, 0],
+            vec![1, 1],
+            vec![-1, 1],
+            vec![0, -1],
+            vec![-1, 0],
+            vec![-1, -1],
+            vec![1, -1],
+        ];
+        for d in 1..3 {
+            for k in 0..8 {
+                let p = self.get(row as i32 + dirs[k][0] * d, col as i32 + dirs[k][1]);
+                if !p.is_none() && p != Some(0) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 }
 

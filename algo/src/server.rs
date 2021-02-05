@@ -20,8 +20,10 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
                 })
                 .unwrap_or_else(HashMap::new);
             let input = params.get("input").unwrap();
-            let board = board::Board::from(input.to_string());
-            let move_ans = board.gen_move();
+            let player: u8 = params.get("player").unwrap().parse().unwrap();
+            let mut board = board::Board::from(input.to_string());
+            let (score, row, col) = board.gen_move(player, 5);
+            let move_ans = format!("{} {} {}", score, row, col);
             Ok(Response::new(move_ans.into()))
         }
         (&Method::GET, "/") | (&Method::GET, "/post") => Ok(Response::new("status".into())),
