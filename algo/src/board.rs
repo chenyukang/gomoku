@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use super::utils;
 use std::cmp;
 
 #[derive(Debug)]
@@ -17,7 +18,7 @@ struct Line {
 
 impl Line {
     pub fn new(count: u32, hole_count: i32, open_count: i32) -> Self {
-        Line {
+        Self {
             count: count,
             hole_count: hole_count,
             open_count: open_count,
@@ -98,8 +99,7 @@ impl Board {
                     continue;
                 }
                 self.place(i, j, player);
-                let next_player = if player == 1 { 2 } else { 1 };
-                let (score, _, _) = self.gen_move(next_player, depth - 1);
+                let (score, _, _) = self.gen_move(utils::opponent(player), depth - 1);
                 if score > max_score {
                     max_score = score;
                     move_x = i;
@@ -145,27 +145,19 @@ impl Board {
     }
 
     fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
-        let line = Line::new(0, 0, 0);
         let mut open_count = 2;
-        if let Some(prev) = self.get_prev(row as i32, col as i32, dir) {
-            if prev == player {
-                // this position has been evaled
-                return line;
-            } else if prev != 0 {
-                // prev position is placed by opponent player
-                open_count -= 1;
+        match self.get_prev(row as i32, col as i32, dir) {
+            Some(v) => {
+                if v == player {
+                    return Line::new(0, 0, 0);
+                } else if v != 0 {
+                    open_count -= 1;
+                }
             }
-        } else {
-            //prev position can not be placed
-            open_count -= 1;
+            _ => open_count -= 1,
         }
         let (count, hole_count, end_pos) = self.count_pos(player, row, col, dir, allow_hole);
-        if let Some(p) = end_pos {
-            if p != 0 && p != player {
-                //end position can not be placed
-                open_count -= 1;
-            }
-        } else {
+        if end_pos.is_none() || end_pos == Some(utils::opponent(player)) {
             open_count -= 1;
         }
         Line::new(count, hole_count, open_count)

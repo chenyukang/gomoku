@@ -1,6 +1,7 @@
 use clap::clap_app;
 mod board;
 mod server;
+mod utils;
 
 fn main() {
     let matches = clap_app!(myapp =>
