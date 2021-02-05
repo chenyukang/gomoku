@@ -22,8 +22,8 @@ struct BodyType {
     num_threads: i32,
     pm_count: i32,
     search_depth: i32,
-    winning_player: i32,
-    score: u32,
+    winning_player: u8,
+    score: i32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -48,7 +48,23 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
             let player: u8 = params.get("p").unwrap().parse().unwrap();
             println!("got request: {} => {}", input, player);
             let mut board = board::Board::from(input.to_string());
-            let (score, row, col) = board.gen_move(player, 3);
+            let mut winner = 0;
+            let mut ans_score = 0;
+            let mut ans_col = 0;
+            let mut ans_row = 0;
+            if let Some(w) = board.any_winner() {
+                winner = w;
+            } else {
+                let (score, row, col) = board.gen_move(player, 2);
+                board.place(row, col, player);
+                if let Some(w) = board.any_winner() {
+                    println!("winner: {:?}", winner);
+                    winner = w;
+                }
+                ans_score = score;
+                ans_row = row;
+                ans_col = col;
+            }
             let result = ResponseType {
                 message: String::from("ok"),
                 result: BodyType {
@@ -58,14 +74,14 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
                     cc_1: String::from("0"),
                     cpu_time: String::from("1101"),
                     eval_count: 1000,
-                    move_c: col,
-                    move_r: row,
+                    move_c: ans_col,
+                    move_r: ans_row,
                     node_count: 100,
                     num_threads: 1,
                     pm_count: 1,
                     search_depth: 9,
-                    winning_player: 0,
-                    score: score,
+                    winning_player: winner,
+                    score: ans_score,
                 },
             };
             let result_str = serde_json::to_string(&result).unwrap();

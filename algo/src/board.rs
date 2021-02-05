@@ -86,22 +86,24 @@ impl Board {
         Board::new(input, width, height)
     }
 
-    pub fn gen_move(&mut self, player: u8, depth: i32) -> (u32, usize, usize) {
-        if depth == 0 {
+    pub fn gen_move(&mut self, player: u8, depth: i32) -> (i32, usize, usize) {
+        if depth <= 0 {
             return (self.eval(player), 0, 0);
         }
-        let mut max_score = std::u32::MIN;
+        let mut max_score = std::i32::MIN;
         let mut move_x = 0;
         let mut move_y = 0;
+        //println!("gen_move: {} {}", player, depth);
         for i in 0..self.height {
             for j in 0..self.width {
                 if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
                     continue;
                 }
                 self.place(i, j, player);
-                let (score, _, _) = self.gen_move(utils::opponent(player), depth - 1);
-                if score > max_score {
-                    max_score = score;
+                let score1 = self.eval(player);
+                let (score2, _, _) = self.gen_move(utils::opponent(player), depth - 1);
+                if score1 - score2 > max_score {
+                    max_score = score1 - score2;
                     move_x = i;
                     move_y = j;
                 }
@@ -111,7 +113,7 @@ impl Board {
         (max_score, move_x, move_y)
     }
 
-    fn any_winner(&self) -> Option<u8> {
+    pub fn any_winner(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
                 for p in 1..3 {
@@ -127,8 +129,8 @@ impl Board {
         None
     }
 
-    fn eval(&self, player: u8) -> u32 {
-        let mut score: u32 = 0;
+    fn eval(&self, player: u8) -> i32 {
+        let mut score: i32 = 0;
         for i in 0..self.height {
             for j in 0..self.width {
                 for k in 0..4 {
@@ -137,10 +139,11 @@ impl Board {
                     let line2 = self.make_line(player, i, j, k, 1);
                     let score1 = line1.score();
                     let score2 = line2.score();
-                    score += cmp::max(score1, score2);
+                    score += cmp::max(score1 as i32, score2 as i32);
                 }
             }
         }
+        //println!("score: {}", score);
         return score;
     }
 
@@ -219,7 +222,7 @@ impl Board {
         row >= 0 && row < self.height as i32 && col >= 0 && col < self.width as i32
     }
 
-    fn place(&mut self, row: usize, col: usize, player: u8) {
+    pub fn place(&mut self, row: usize, col: usize, player: u8) {
         self.digits[row][col] = player
     }
 
@@ -234,9 +237,9 @@ impl Board {
             vec![-1, -1],
             vec![1, -1],
         ];
-        for d in 1..3 {
+        for d in 1..2 {
             for k in 0..8 {
-                let p = self.get(row as i32 + dirs[k][0] * d, col as i32 + dirs[k][1]);
+                let p = self.get(row as i32 + dirs[k][0] * d, col as i32 + dirs[k][1] * d);
                 if !p.is_none() && p != Some(0) {
                     return false;
                 }
