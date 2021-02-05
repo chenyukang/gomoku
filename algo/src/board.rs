@@ -10,26 +10,41 @@ pub struct Board {
 #[derive(Debug)]
 struct Line {
     count: usize,
-    need_count: i32,
+    hole_count: i32,
     open_count: i32,
 }
 
 impl Line {
-    pub fn new(count: usize, need_count: i32, open_count: i32) -> Self {
+    pub fn new(count: usize, hole_count: i32, open_count: i32) -> Self {
         Line {
             count: count,
-            need_count: need_count,
+            hole_count: hole_count,
             open_count: open_count,
         }
     }
 
     pub fn is_non_refutable(&self) -> bool {
-        (self.count >= 5 && self.need_count == 0)
-            || (self.count == 4 && self.need_count == 0 && self.open_count == 2)
+        (self.count >= 5 && self.hole_count == 0)
+            || (self.count == 4 && self.hole_count == 0 && self.open_count == 2)
     }
 
     pub fn score(&self) -> u32 {
-        0
+        match (self.count, self.hole_count, self.open_count) {
+            (5, 0, _) => 10000,
+            (4, 0, 2) => 9900,
+            (5, 1, _) => 1000,
+            (4, 0, 1) => 1500,
+            (4, 1, 2) => 2000,
+            (4, 1, 0) => 800,
+            (3, 0, 2) => 1000,
+            (3, 0, 1) => 500,
+            (3, 1, 2) => 400,
+            (3, 1, 0) => 200,
+            (3, 0, 0) => 100,
+            (2, 0, 2) => 80,
+            (2, 0, 1) => 10,
+            (_, _, _) => 0,
+        }
     }
 }
 
@@ -96,7 +111,6 @@ impl Board {
                     score += 0;
                     let line = self.make_line(player, i, j, k);
                     score += line.score();
-                    //score += self.try_eval_pos(player, i, j, k);
                 }
             }
         }
@@ -224,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn test_board_check() {
+    fn test_board_check_winner() {
         let mut board = Board::new(String::from("1111100000"), 5, 2);
         assert_eq!(board.any_winner(), Some(1));
 
@@ -260,5 +274,22 @@ mod tests {
 
         board = Board::new(String::from("10000 10001 01021 00001 00001 00001"), 5, 6);
         assert_eq!(board.any_winner(), Some(1));
+    }
+
+    #[test]
+    fn test_board_score() {
+        let mut board = Board::new(String::from("1111000000"), 5, 2);
+        assert_eq!(board.eval(2), 0);
+        assert_eq!(board.eval(1), 1500);
+
+        board = Board::new(String::from("1111111111"), 5, 2);
+        assert_eq!(board.eval(2), 0);
+        assert_eq!(board.eval(1), 20000);
+
+        board = Board::new(String::from("10000 01000 00100"), 5, 3);
+        assert_eq!(board.eval(1), 100);
+
+        board = Board::new(String::from("10000 01000 00100 00000"), 5, 4);
+        assert_eq!(board.eval(1), 500);
     }
 }
