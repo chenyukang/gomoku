@@ -1,12 +1,36 @@
 #![allow(dead_code)]
 
-
-
 #[derive(Debug)]
 pub struct Board {
     width: usize,
     height: usize,
     digits: Vec<Vec<u8>>,
+}
+
+#[derive(Debug)]
+struct Line {
+    count: usize,
+    need_count: i32,
+    open_count: i32,
+}
+
+impl Line {
+    pub fn new(count: usize, need_count: i32, open_count: i32) -> Self {
+        Line {
+            count: count,
+            need_count: need_count,
+            open_count: open_count,
+        }
+    }
+
+    pub fn is_non_refutable(&self) -> bool {
+        (self.count >= 5 && self.need_count == 0)
+            || (self.count == 4 && self.need_count == 0 && self.open_count == 2)
+    }
+
+    pub fn score(&self) -> u32 {
+        0
+    }
 }
 
 impl Board {
@@ -24,7 +48,7 @@ impl Board {
                 rows.len()
             );
         }
-        if width < 5 && height < 5 { 
+        if width < 5 && height < 5 {
             panic!("Width or height must larger than")
         }
         Self {
@@ -48,12 +72,12 @@ impl Board {
         String::from("Move result")
     }
 
-    fn check(&self) -> Option<u8> {
+    fn any_winner(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
-                for p in 1..3 { 
-                    for k in 0..4 { 
-                        let count = self.try_eval_pos(p, i, j, k);
+                for p in 1..3 {
+                    for k in 0..4 {
+                        let (count, _) = self.count_pos(p, i, j, k);
                         if count >= 5 {
                             return Some(p);
                         }
@@ -64,41 +88,78 @@ impl Board {
         None
     }
 
-    fn eval(&self, player: u8) -> u32 { 
+    fn eval(&self, player: u8) -> u32 {
         let mut score: u32 = 0;
-        for i in 0..self.height { 
-            for j in 0..self.width { 
-                for k in 0..4 { 
-                    score += self.try_eval_pos(player, i, j, k);
+        for i in 0..self.height {
+            for j in 0..self.width {
+                for k in 0..4 {
+                    score += 0;
+                    let line = self.make_line(player, i, j, k);
+                    score += line.score();
+                    //score += self.try_eval_pos(player, i, j, k);
                 }
             }
         }
         return score;
     }
 
-    fn try_eval_pos(&self, player: u8, row: usize, col: usize, dir: usize) -> u32 { 
+    fn make_line(&self, player: u8, row: usize, col: usize, dir: usize) -> Line {
+        let mut line = Line::new(0, 0, 0);
+        let rev_dirs = vec![vec![0, -1], vec![-1, 0], vec![-1, -1], vec![1, -1]];
+        let p_row = row as i32 + rev_dirs[dir][0];
+        let p_col = col as i32 + rev_dirs[dir][1];
+        let mut open_count = 2;
+        if let Some(prev) = self.get(p_row, p_col) {
+            if prev == player {
+                // this position has been evaled
+                return line;
+            } else if prev != 0 {
+                // prev position is placed by opponent player
+                open_count -= 1;
+            }
+        } else {
+            //prev position can not be placed
+            open_count -= 1;
+        }
+        let (count, end_pos) = self.count_pos(player, row, col, dir);
+        if let Some(p) = end_pos {
+            if p != 0 && p != player {
+                //end position can not be placed
+                open_count -= 1;
+            }
+        } else {
+            open_count -= 1;
+        }
+        line.count = count as usize;
+        line.open_count = open_count;
+        return line;
+    }
+
+    fn count_pos(&self, player: u8, row: usize, col: usize, dir: usize) -> (u32, Option<u8>) {
         let dirs = vec![vec![0, 1], vec![1, 0], vec![1, 1], vec![-1, 1]];
         let cur = &dirs[dir];
         let mut i = row as i32;
         let mut j = col as i32;
         let mut count = 0;
-        loop { 
-            if let Some(p) = self.get(i, j) { 
+        let mut next_pos = None;
+        loop {
+            if let Some(p) = self.get(i, j) {
                 if p != player {
-                    break
+                    next_pos = Some(p);
+                    break;
                 } else {
                     count += 1;
                     i += cur[0];
                     j += cur[1];
                 }
-            } else { 
+            } else {
                 break;
             }
         }
-        count
+        (count, next_pos)
     }
 
-    fn get(&self, row: i32, col: i32) -> Option<u8> { 
+    fn get(&self, row: i32, col: i32) -> Option<u8> {
         if !self.valid_pos(row, col) {
             None
         } else {
@@ -120,6 +181,18 @@ mod tests {
         let board = Board::new(String::from("121211"), 1, 6);
         assert_eq!(board.width, 1);
         assert_eq!(board.height, 6);
+    }
+
+    #[test]
+    fn test_line() {
+        let mut line = Line::new(5, 0, 0);
+        assert_eq!(line.is_non_refutable(), true);
+
+        line = Line::new(5, 0, 1);
+        assert_eq!(line.is_non_refutable(), true);
+
+        line = Line::new(5, 1, 0);
+        assert_eq!(line.is_non_refutable(), false);
     }
 
     #[test]
@@ -153,39 +226,39 @@ mod tests {
     #[test]
     fn test_board_check() {
         let mut board = Board::new(String::from("1111100000"), 5, 2);
-        assert_eq!(board.check(), Some(1));
+        assert_eq!(board.any_winner(), Some(1));
 
         board = Board::new(String::from("1111000000"), 5, 2);
-        assert_eq!(board.check(), None);
+        assert_eq!(board.any_winner(), None);
 
         board = Board::new(String::from("1111022222"), 5, 2);
-        assert_eq!(board.check(), Some(2));
+        assert_eq!(board.any_winner(), Some(2));
 
         board = Board::new(String::from("111101111011110"), 5, 3);
-        assert_eq!(board.check(), None);
+        assert_eq!(board.any_winner(), None);
 
         board = Board::new(String::from("1111011110111101111010000"), 5, 5);
-        assert_eq!(board.check(), Some(1));
+        assert_eq!(board.any_winner(), Some(1));
 
         board = Board::new(String::from("1111011110111100111010000"), 5, 5);
-        assert_eq!(board.check(), None);
+        assert_eq!(board.any_winner(), None);
 
         board = Board::new(String::from("10000 01000 00100 00010 00001"), 5, 5);
-        assert_eq!(board.check(), Some(1));
+        assert_eq!(board.any_winner(), Some(1));
 
         board = Board::new(String::from("10000 01000 00000 00010 00001"), 5, 5);
-        assert_eq!(board.check(), None);
+        assert_eq!(board.any_winner(), None);
 
         board = Board::new(String::from("22220 10000 01000 00100 00010 00001"), 5, 6);
-        assert_eq!(board.check(), Some(1));
+        assert_eq!(board.any_winner(), Some(1));
 
         board = Board::new(String::from("22220 00001 00010 00100 01000 10000"), 5, 6);
-        assert_eq!(board.check(), Some(1));
+        assert_eq!(board.any_winner(), Some(1));
 
         board = Board::new(String::from("22222 00001 00010 00100 01000 10000"), 5, 6);
-        assert_eq!(board.check(), Some(2));
+        assert_eq!(board.any_winner(), Some(2));
 
         board = Board::new(String::from("10000 10001 01021 00001 00001 00001"), 5, 6);
-        assert_eq!(board.check(), Some(1));
+        assert_eq!(board.any_winner(), Some(1));
     }
 }
