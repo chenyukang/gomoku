@@ -32,18 +32,18 @@ impl Line {
 
     pub fn score(&self) -> u32 {
         match (self.count, self.hole_count, self.open_count) {
-            (5, 0, _) => 10000,
+            (5, 0, _) => 100000,
             (4, 0, 2) => 9900,
-            (5, 1, _) => 1000,
-            (4, 0, 1) => 1500,
             (4, 1, 2) => 2000,
-            (4, 1, 0) => 800,
+            (3, 0, 2) => 2000,
+            (5, 1, _) => 1000,
+            (4, 0, 1) => 800,
+            (4, 1, 0) => 100,
             (4, 1, 1) => 1000,
-            (3, 0, 2) => 1000,
             (3, 0, 1) => 500,
-            (3, 1, 2) => 400,
-            (3, 1, 0) => 200,
             (3, 0, 0) => 100,
+            (3, 1, 2) => 300,
+            (3, 1, 0) => 80,
             (2, 0, 2) => 80,
             (2, 0, 1) => 10,
             (_, _, _) => 0,
@@ -120,6 +120,7 @@ impl Board {
         return score;
     }
 
+    // TBD: open direction should consider board width and height
     fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
         let mut open_count = 2;
         match self.get_prev(row as i32, col as i32, dir) {
@@ -316,7 +317,7 @@ mod tests {
     fn test_board_score() {
         let mut board = Board::new(String::from("1111000000"), 5, 2);
         assert_eq!(board.eval(2), 0);
-        assert_eq!(board.eval(1), 1500);
+        assert_eq!(board.eval(1), 800);
 
         board = Board::new(String::from("1111111111"), 5, 2);
         assert_eq!(board.eval(2), 0);
@@ -332,12 +333,12 @@ mod tests {
         assert_eq!(board.eval(1), 660);
 
         board = Board::new(String::from("00000 01110 01110 01110 00000"), 5, 5);
-        assert_eq!(board.eval(1), 8320);
+        assert_eq!(board.eval(1), 16320);
 
         board = Board::new(String::from("101100 000000"), 6, 2);
         assert_eq!(board.eval(1), 1080);
 
         board = Board::new(String::from("101110 000000"), 6, 2);
-        assert_eq!(board.eval(1), 2000);
+        assert_eq!(board.eval(1), 3000);
     }
 }
