@@ -6,7 +6,7 @@ use std::cmp;
 pub struct Board {
     pub width: usize,
     pub height: usize,
-    digits: Vec<Vec<u8>>,
+    cells: Vec<Vec<u8>>,
 }
 
 #[derive(Debug)]
@@ -72,7 +72,7 @@ impl Board {
         Self {
             width: width,
             height: height,
-            digits: rows.chunks(width).map(|x| x.to_vec()).collect(),
+            cells: rows.chunks(width).map(|x| x.to_vec()).collect(),
         }
     }
 
@@ -181,7 +181,7 @@ impl Board {
         if !self.valid_pos(row, col) {
             None
         } else {
-            Some(self.digits[row as usize][col as usize])
+            Some(self.cells[row as usize][col as usize])
         }
     }
 
@@ -197,7 +197,7 @@ impl Board {
     }
 
     pub fn place(&mut self, row: usize, col: usize, player: u8) {
-        self.digits[row][col] = player
+        self.cells[row][col] = player
     }
 
     pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
@@ -220,6 +220,18 @@ impl Board {
             }
         }
         true
+    }
+
+    pub fn empty_cells_count(&self) -> u32 {
+        let mut count = 0;
+        for i in 0..self.height {
+            for j in 0..self.width {
+                if self.cells[i][j] != 0 {
+                    count += 1;
+                }
+            }
+        }
+        count
     }
 }
 
@@ -268,10 +280,10 @@ mod tests {
     #[test]
     fn test_board_elements() {
         let board = Board::new(String::from("000112000112"), 6, 2);
-        assert_eq!(board.digits[0][0], 0);
-        assert_eq!(board.digits[0][1], 0);
-        assert_eq!(board.digits[1][4], 1);
-        assert_eq!(board.digits[1][5], 2);
+        assert_eq!(board.cells[0][0], 0);
+        assert_eq!(board.cells[0][1], 0);
+        assert_eq!(board.cells[1][4], 1);
+        assert_eq!(board.cells[1][5], 2);
     }
 
     #[test]

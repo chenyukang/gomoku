@@ -32,7 +32,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let mut runner = algo::Runner::new(3);
+        let mut runner = algo::Runner::new(player, 3);
         let (score, row, col) = runner.gen_move_negamax(&mut board, player, 3);
         board.place(row, col, player);
         if let Some(w) = board.any_winner() {

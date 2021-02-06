@@ -4,14 +4,16 @@ use super::board::*;
 use super::utils;
 
 pub struct Runner {
+    player: u8,
     depth: i32,
     gen_move_count: u32,
     eval_node: u32,
 }
 
 impl Runner {
-    pub fn new(depth: i32) -> Self {
+    pub fn new(player: u8, depth: i32) -> Self {
         Self {
+            player: player,
             depth: depth,
             gen_move_count: 0,
             eval_node: 0,
@@ -53,7 +55,7 @@ impl Runner {
     ) -> (i32, usize, usize) {
         self.eval_node += 1;
         if depth <= 0 {
-            let flag = if player == 1 { 1 } else { -1 };
+            let flag = if player == self.player { 1 } else { -1 };
             return (flag * board.eval(player), 0, 0);
         }
         let mut max_score = std::i32::MIN;
@@ -98,16 +100,16 @@ mod tests {
         let mut board = make_empty_board();
         let mut winner = 0;
         loop {
-            let mut runner1 = Runner::new(2);
-            let mut runner2 = Runner::new(2);
+            let mut runner1 = Runner::new(1, 2);
+            let mut runner2 = Runner::new(2, 2);
             let (_, mv_x1, mv_y1) = runner1.gen_move(&mut board, 1, 2);
+            board.place(mv_x1, mv_y1, 1);
             if let Some(w) = board.any_winner() {
                 println!("winner1: {}", w);
                 winner = w;
                 break;
             }
-            board.place(mv_x1, mv_y1, 1);
-            let (_, mv_x2, mv_y2) = runner2.gen_move_negamax(&mut board, 2, 2);
+            let (_, mv_x2, mv_y2) = runner2.gen_move_negamax(&mut board, 2, 3);
             if let Some(w) = board.any_winner() {
                 println!("winner2: {}", w);
                 winner = w;
@@ -115,7 +117,11 @@ mod tests {
             }
             board.place(mv_x2, mv_y2, 2);
         }
-        println!("winner: {}", winner);
-        assert_eq!(winner != 0, true);
+        println!(
+            "winner: {}, empty_cells: {}",
+            winner,
+            board.empty_cells_count()
+        );
+        assert_eq!(winner, 1);
     }
 }
