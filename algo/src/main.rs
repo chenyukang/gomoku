@@ -1,6 +1,7 @@
 use clap::clap_app;
 mod algo;
 mod board;
+mod control;
 mod server;
 mod utils;
 

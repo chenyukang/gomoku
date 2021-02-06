@@ -1,67 +1,29 @@
 use super::board::*;
-use serde::{Deserialize, Serialize};
+use super::utils;
 
-#[derive(Serialize, Deserialize)]
-struct BodyType {
-    ai_player: u8,
-    build: String,
-    cc_0: String,
-    cc_1: String,
-    cpu_time: String,
-    eval_count: u32,
-    move_c: usize,
-    move_r: usize,
-    node_count: i32,
-    num_threads: i32,
-    pm_count: i32,
-    search_depth: i32,
-    winning_player: u8,
-    score: i32,
-}
-
-#[derive(Serialize, Deserialize)]
-struct ResponseType {
-    message: String,
-    result: BodyType,
-}
-
-pub fn gen_move(input: &str, player: u8) -> String {
-    let mut board = Board::from(input.to_string());
-    let mut winner = 0;
-    let mut ans_score = 0;
-    let mut ans_col = 0;
-    let mut ans_row = 0;
-    if let Some(w) = board.any_winner() {
-        winner = w;
-    } else {
-        let (score, row, col) = board.gen_move(player, 2);
-        board.place(row, col, player);
-        if let Some(w) = board.any_winner() {
-            println!("winner: {:?}", winner);
-            winner = w;
-        }
-        ans_score = score;
-        ans_row = row;
-        ans_col = col;
+pub fn gen_move(board: &mut Board, player: u8, depth: i32) -> (i32, usize, usize) {
+    if depth <= 0 {
+        return (board.eval(player), 0, 0);
     }
-    let result = ResponseType {
-        message: String::from("ok"),
-        result: BodyType {
-            ai_player: 2,
-            build: String::from("Feb  4 2021 06:45:24"),
-            cc_0: String::from("0"),
-            cc_1: String::from("0"),
-            cpu_time: String::from("1101"),
-            eval_count: 1000,
-            move_c: ans_col,
-            move_r: ans_row,
-            node_count: 100,
-            num_threads: 1,
-            pm_count: 1,
-            search_depth: 9,
-            winning_player: winner,
-            score: ans_score,
-        },
-    };
-    serde_json::to_string(&result).unwrap()
+    let mut max_score = std::i32::MIN;
+    let mut move_x = 0;
+    let mut move_y = 0;
+    //println!("gen_move: {} {}", player, depth);
+    for i in 0..board.height {
+        for j in 0..board.width {
+            if board.get(i as i32, j as i32) != Some(0) || board.is_remote_cell(i, j) {
+                continue;
+            }
+            board.place(i, j, player);
+            let score1 = board.eval(player);
+            let (score2, _, _) = gen_move(board, utils::opponent(player), depth - 1);
+            if score1 - score2 > max_score {
+                max_score = score1 - score2;
+                move_x = i;
+                move_y = j;
+            }
+            board.place(i, j, 0);
+        }
+    }
+    (max_score, move_x, move_y)
 }

@@ -4,8 +4,8 @@ use std::cmp;
 
 #[derive(Debug)]
 pub struct Board {
-    width: usize,
-    height: usize,
+    pub width: usize,
+    pub height: usize,
     digits: Vec<Vec<u8>>,
 }
 
@@ -86,33 +86,6 @@ impl Board {
         Board::new(input, width, height)
     }
 
-    pub fn gen_move(&mut self, player: u8, depth: i32) -> (i32, usize, usize) {
-        if depth <= 0 {
-            return (self.eval(player), 0, 0);
-        }
-        let mut max_score = std::i32::MIN;
-        let mut move_x = 0;
-        let mut move_y = 0;
-        //println!("gen_move: {} {}", player, depth);
-        for i in 0..self.height {
-            for j in 0..self.width {
-                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
-                    continue;
-                }
-                self.place(i, j, player);
-                let score1 = self.eval(player);
-                let (score2, _, _) = self.gen_move(utils::opponent(player), depth - 1);
-                if score1 - score2 > max_score {
-                    max_score = score1 - score2;
-                    move_x = i;
-                    move_y = j;
-                }
-                self.place(i, j, 0);
-            }
-        }
-        (max_score, move_x, move_y)
-    }
-
     pub fn any_winner(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
@@ -129,7 +102,7 @@ impl Board {
         None
     }
 
-    fn eval(&self, player: u8) -> i32 {
+    pub fn eval(&self, player: u8) -> i32 {
         let mut score: i32 = 0;
         for i in 0..self.height {
             for j in 0..self.width {
@@ -203,7 +176,7 @@ impl Board {
         (count, allow_hole - hole_count, next_pos)
     }
 
-    fn get(&self, row: i32, col: i32) -> Option<u8> {
+    pub fn get(&self, row: i32, col: i32) -> Option<u8> {
         if !self.valid_pos(row, col) {
             None
         } else {
@@ -226,7 +199,7 @@ impl Board {
         self.digits[row][col] = player
     }
 
-    fn is_remote_cell(&self, row: usize, col: usize) -> bool {
+    pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
         let dirs = vec![
             vec![0, 1],
             vec![1, 0],

@@ -3,8 +3,8 @@
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 
-use super::algo::*;
 use super::board::*;
+use super::control::*;
 use std::collections::HashMap;
 use url::*;
 
@@ -23,7 +23,7 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
             let input = params.get("s").unwrap();
             let player: u8 = params.get("p").unwrap().parse().unwrap();
             println!("got request: {} => {}", input, player);
-            let result = gen_move(input, player);
+            let result = solve_it(input, player);
             println!("result:\n {}", result);
             let response = Response::builder()
                 .status(200)
