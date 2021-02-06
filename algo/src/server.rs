@@ -22,9 +22,9 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
                 .unwrap_or_else(HashMap::new);
             let input = params.get("s").unwrap();
             let player: u8 = params.get("p").unwrap().parse().unwrap();
-            println!("got request: {} => {}", input, player);
+            //println!("got request: {} => {}", input, player);
             let result = solve_it(input, player);
-            println!("result:\n {}", result);
+            //println!("result:\n {}", result);
             let response = Response::builder()
                 .status(200)
                 .header("Access-Control-Allow-Origin", "*")

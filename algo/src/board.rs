@@ -119,7 +119,25 @@ impl Board {
         return score;
     }
 
-    // TBD: open direction should consider board width and height
+    pub fn best_move(&self, player: u8) -> i32 {
+        let mut score: i32 = 0;
+        for i in 0..self.height {
+            for j in 0..self.width {
+                for k in 0..4 {
+                    score += 0;
+                    let line1 = self.make_line(player, i, j, k, 0);
+                    let line2 = self.make_line(player, i, j, k, 1);
+                    let score1 = line1.score();
+                    let score2 = line2.score();
+                    score = cmp::max(score, cmp::max(score1 as i32, score2 as i32));
+                }
+            }
+        }
+        //println!("score: {}", score);
+        score
+    }
+
+    // Open direction should consider board width and height
     fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
         let mut open_count = 2;
         match self.get_prev(row as i32, col as i32, dir) {
