@@ -21,6 +21,10 @@ impl Move {
             max_single: max_single,
         }
     }
+
+    pub fn is_threaten(&self) -> bool {
+        self.max_single >= 9900
+    }
 }
 
 pub struct Runner {
@@ -125,13 +129,14 @@ impl Runner {
         moves
     }
 
-    pub fn run_heuristic(
-        &mut self,
-        board: &mut Board,
-        player: u8,
-        depth: i32,
-    ) -> (i32, usize, usize) {
-        self.gen_move_heuristic(board, player, depth, std::i32::MIN / 2, std::i32::MAX / 2)
+    pub fn run_heuristic(&mut self, board: &mut Board, player: u8) -> (i32, usize, usize) {
+        self.gen_move_heuristic(
+            board,
+            player,
+            self.depth,
+            std::i32::MIN / 2,
+            std::i32::MAX / 2,
+        )
     }
     /* The minimax algorithm with alpha-beta tunning
      */
@@ -148,8 +153,7 @@ impl Runner {
             return (board.eval_all(player), 0, 0);
         }
         let mut max_score = std::i32::MIN;
-        let mut move_x = 0;
-        let mut move_y = 0;
+        let mut final_move = Move::new(0, 0, 0, 0);
         let mut cur_alpha = alpha;
         let dead_score = 100000;
         let threatening_score = 3500;
@@ -186,8 +190,7 @@ impl Runner {
             if mv.score > max_score {
                 println!("opponent_score: {}", opponent_score);
                 max_score = mv.score;
-                move_x = mv.x;
-                move_y = mv.y;
+                final_move = mv;
                 best_moves.clear();
                 best_moves.push(mv);
             } else if mv.score == max_score {
@@ -198,20 +201,29 @@ impl Runner {
                 break;
             }
         }
-        if block_move.is_some() && max_score <= block_move.unwrap().score {
-            move_x = block_move.unwrap().x;
-            move_y = block_move.unwrap().y;
+        println!(
+            "final_move: {:?} threaten: {:?} depth: {} = initial_depth: {}",
+            final_move,
+            final_move.is_threaten(),
+            depth,
+            self.depth
+        );
+        if depth == self.depth
+            && block_move.is_some()
+            && max_score <= block_move.unwrap().score
+            && !final_move.is_threaten()
+        {
+            println!("use block move: {:?}", block_move);
+            final_move = block_move.unwrap();
         } else if best_moves.len() > 1 {
             //choose a random step
             let mut rng = thread_rng();
             let idx: usize = rng.gen_range(0, best_moves.len());
-            let mv = best_moves[idx];
-            move_x = mv.x;
-            move_y = mv.y;
+            final_move = best_moves[idx];
             println!("random choose one: {} from {}", idx, best_moves.len());
         }
         println!("block move: {:?}   max_score: {}", block_move, max_score);
-        (max_score, move_x, move_y)
+        (max_score, final_move.x, final_move.y)
     }
 }
 #[cfg(test)]

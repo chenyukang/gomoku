@@ -29,11 +29,11 @@ pub fn solve_it(input: &str, player: u8) -> String {
     let mut ans_score = 0;
     let mut ans_col = 0;
     let mut ans_row = 0;
-    let mut runner = algo::Runner::new(player, 3);
+    let mut runner = algo::Runner::new(player, 14);
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let (score, row, col) = runner.run_heuristic(&mut board, player, 14);
+        let (score, row, col) = runner.run_heuristic(&mut board, player);
         board.place(row, col, player);
         if let Some(w) = board.any_winner() {
             println!("winner: {:?}", winner);
