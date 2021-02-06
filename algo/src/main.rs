@@ -12,6 +12,7 @@ fn main() {
         (about: "Algo backend for Gomoku")
         (@arg input: -i --input +takes_value "Current board of gomoku")
         (@arg verbose: -v --verbose "Print version information verbosely")
+        (@arg battle: -b --battle "Run in battle mode")
         (@arg width: -w --width +takes_value "The board width")
         (@arg height: -h --height +takes_value "The board height")
         (@arg depth: -d --depth +takes_value "The search depth for algo")
@@ -22,6 +23,12 @@ fn main() {
     let mut search_depth = 14;
     let mut board_width = 4;
     let mut board_height = 4;
+
+    if matches.occurrences_of("battle") > 0 {
+        control::battle();
+        return;
+    }
+
     if let Some(depth) = matches.value_of("depth") {
         search_depth = depth.parse::<i32>().unwrap();
     }

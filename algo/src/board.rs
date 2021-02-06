@@ -40,10 +40,10 @@ impl Line {
             (5, 1, _) => 1000,
             (4, 0, 1) => 800,
             (4, 1, 1) => 500,
-            (3, 0, 1) => 500,
-            (3, 0, 0) => 80,
-            (3, 1, 2) => 300,
-            (3, 1, 0) => 50,
+            (3, 0, 1) => 100,
+            (3, 0, 0) => 20,
+            (3, 1, 2) => 40,
+            (3, 1, 0) => 30,
             (2, 0, 2) => 80,
             (2, 0, 1) => 10,
             (_, _, _) => 0,
@@ -278,6 +278,39 @@ impl Board {
         }
         count
     }
+
+    pub fn to_string(&self) -> String {
+        let mut res = "".to_string();
+        for i in 0..self.height {
+            for j in 0..self.width {
+                res += format!("{}", self.cells[i][j]).as_str()
+            }
+        }
+        res
+    }
+
+    pub fn print(&self) {
+        for i in 0..self.height {
+            let mut res = "".to_string();
+            for j in 0..self.width {
+                let cell = match self.cells[i][j] {
+                    1 => 'O',
+                    2 => '+',
+                    _ => '.',
+                };
+                res += format!("{}", cell).as_str();
+            }
+            println!("{}", res.as_str());
+        }
+    }
+
+    pub fn new_default() -> Board {
+        let mut res = String::from("");
+        for _ in 0..(15 * 15) {
+            res = res + "0";
+        }
+        Board::from(res)
+    }
 }
 
 #[cfg(test)]
@@ -289,6 +322,7 @@ mod tests {
         let board = Board::new(String::from("121211"), 1, 6);
         assert_eq!(board.width, 1);
         assert_eq!(board.height, 6);
+        assert_eq!(board.to_string(), "121211");
     }
 
     #[test]
