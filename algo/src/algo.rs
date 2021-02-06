@@ -9,14 +9,16 @@ pub struct Move {
     x: usize,
     y: usize,
     score: i32,
+    max_single: i32,
 }
 
 impl Move {
-    pub fn new(x: usize, y: usize, score: i32) -> Self {
+    pub fn new(x: usize, y: usize, score: i32, max_single: i32) -> Self {
         Self {
             x: x,
             y: y,
             score: score,
+            max_single: max_single,
         }
     }
 }
@@ -42,7 +44,7 @@ impl Runner {
     pub fn gen_move(&mut self, board: &mut Board, player: u8, depth: i32) -> (i32, usize, usize) {
         self.eval_node += 1;
         if depth <= 0 {
-            return (board.eval(player), 0, 0);
+            return (board.eval_all(player), 0, 0);
         }
         let mut max_score = std::i32::MIN;
         let mut move_x = 0;
@@ -54,7 +56,7 @@ impl Runner {
                     continue;
                 }
                 board.place(i, j, player);
-                let score1 = board.eval(player);
+                let (score1, _) = board.eval(player);
                 let (score2, _, _) = self.gen_move(board, utils::opponent(player), depth - 1);
                 if score1 - score2 > max_score {
                     max_score = score1 - score2;
@@ -80,7 +82,7 @@ impl Runner {
         self.eval_node += 1;
         if depth <= 0 {
             let flag = if player == self.player { 1 } else { -1 };
-            return (flag * board.eval(player), 0, 0);
+            return (flag * board.eval_all(player), 0, 0);
         }
         let mut max_score = std::i32::MIN / 2;
         let mut move_x = 0;
@@ -114,9 +116,9 @@ impl Runner {
                     continue;
                 }
                 board.place(i, j, player);
-                let score = board.eval(player);
+                let (score, max_single) = board.eval(player);
                 board.place(i, j, 0);
-                moves.push(Move::new(i, j, score));
+                moves.push(Move::new(i, j, score, max_single));
             }
         }
         moves.sort_by(|a, b| b.score.cmp(&a.score));
@@ -143,7 +145,7 @@ impl Runner {
     ) -> (i32, usize, usize) {
         self.eval_node += 1;
         if depth <= 0 {
-            return (board.eval(player), 0, 0);
+            return (board.eval_all(player), 0, 0);
         }
         let mut max_score = std::i32::MIN;
         let mut move_x = 0;
