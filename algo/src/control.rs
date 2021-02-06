@@ -29,7 +29,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
     let mut ans_score = 0;
     let mut ans_col = 0;
     let mut ans_row = 0;
-    let mut runner = algo::Runner::new(player, 14);
+    let mut runner = algo::Runner::new(player, 10);
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {

@@ -202,16 +202,15 @@ impl Runner {
             }
         }
         println!(
-            "final_move: {:?} threaten: {:?} depth: {} = initial_depth: {}",
+            "final_move: {:?} move_threaten: {:?} depth: {}",
             final_move,
             final_move.is_threaten(),
-            depth,
-            self.depth
+            depth
         );
         if depth == self.depth
             && block_move.is_some()
-            && max_score <= block_move.unwrap().score
-            && !final_move.is_threaten()
+            && ((9900 <= block_move.unwrap().score && !final_move.is_threaten())
+                || block_move.unwrap().score >= dead_score)
         {
             println!("use block move: {:?}", block_move);
             final_move = block_move.unwrap();
@@ -222,7 +221,6 @@ impl Runner {
             final_move = best_moves[idx];
             println!("random choose one: {} from {}", idx, best_moves.len());
         }
-        println!("block move: {:?}   max_score: {}", block_move, max_score);
         (max_score, final_move.x, final_move.y)
     }
 }

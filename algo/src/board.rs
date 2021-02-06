@@ -31,18 +31,19 @@ impl Line {
 
     pub fn score(&self) -> u32 {
         match (self.count, self.hole_count, self.open_count) {
+            (v, 0, _) if v >= 6 => 100000,
+            (v, 1, _) if v >= 6 => 9900,
             (5, 0, _) => 100000,
             (4, 0, 2) => 9900,
             (4, 1, 2) => 1900,
             (3, 0, 2) => 2000,
             (5, 1, _) => 1000,
             (4, 0, 1) => 800,
-            (4, 1, 0) => 100,
-            (4, 1, 1) => 1000,
+            (4, 1, 1) => 500,
             (3, 0, 1) => 500,
-            (3, 0, 0) => 100,
+            (3, 0, 0) => 80,
             (3, 1, 2) => 300,
-            (3, 1, 0) => 80,
+            (3, 1, 0) => 50,
             (2, 0, 2) => 80,
             (2, 0, 1) => 10,
             (_, _, _) => 0,
@@ -146,7 +147,7 @@ impl Board {
 
     // Open direction should consider board width and height
     fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
-        let mut open_count = 2;
+        let mut open_count: u32 = 2;
         match self.get_prev(row as i32, col as i32, dir) {
             Some(v) => {
                 if v == player {
@@ -158,10 +159,14 @@ impl Board {
             _ => open_count -= 1,
         }
         let (count, hole_count, tail_count) = self.count_pos(player, row, col, dir, allow_hole);
-        if tail_count <= 0 || (count < 5 && 5 - count > tail_count) {
+        if tail_count <= 0 || (count + tail_count < 5) {
             open_count -= 1;
         }
-        Line::new(count, hole_count, open_count)
+        let res = Line::new(count, hole_count, open_count as i32);
+        /* if res.count >= 2 {
+            println!("line: {:?}", res);
+        } */
+        res
     }
 
     fn count_pos(
@@ -376,16 +381,16 @@ mod tests {
         assert_eq!(board.eval_all(1), 200000);
 
         board = Board::new(String::from("10000 01000 00100"), 5, 3);
-        assert_eq!(board.eval_all(1), 100);
+        assert_eq!(board.eval_all(1), 80);
 
         board = Board::new(String::from("10000 01000 00100 00000"), 5, 4);
-        assert_eq!(board.eval_all(1), 100);
+        assert_eq!(board.eval_all(1), 80);
 
         board = Board::new(String::from("10000 01000 00100 00000 00000"), 5, 5);
         assert_eq!(board.eval_all(1), 500);
 
         board = Board::new(String::from("10000 01100 00100 00000"), 5, 4);
-        assert_eq!(board.eval_all(1), 120);
+        assert_eq!(board.eval_all(1), 100);
 
         board = Board::new(
             String::from("000000 011100 011100 011100 000000 000000"),
@@ -395,7 +400,7 @@ mod tests {
         assert_eq!(board.eval_all(1), 14540);
 
         board = Board::new(String::from("101100 000000"), 6, 2);
-        assert_eq!(board.eval_all(1), 1010);
+        assert_eq!(board.eval_all(1), 510);
 
         board = Board::new(String::from("1011100 0000000"), 7, 2);
         assert_eq!(board.eval_all(1), 3000);
