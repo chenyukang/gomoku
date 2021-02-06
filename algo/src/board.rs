@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use super::utils;
 use std::cmp;
 
 #[derive(Debug)]
@@ -120,6 +119,24 @@ impl Board {
         return score;
     }
 
+    pub fn best_move(&self, player: u8) -> i32 {
+        let mut score: i32 = 0;
+        for i in 0..self.height {
+            for j in 0..self.width {
+                for k in 0..4 {
+                    score += 0;
+                    let line1 = self.make_line(player, i, j, k, 0);
+                    let line2 = self.make_line(player, i, j, k, 1);
+                    let score1 = line1.score();
+                    let score2 = line2.score();
+                    score = cmp::max(score, cmp::max(score1 as i32, score2 as i32));
+                }
+            }
+        }
+        //println!("score: {}", score);
+        score
+    }
+
     // TBD: open direction should consider board width and height
     fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
         let mut open_count = 2;
@@ -133,8 +150,9 @@ impl Board {
             }
             _ => open_count -= 1,
         }
-        let (count, hole_count, end_pos) = self.count_pos(player, row, col, dir, allow_hole);
-        if end_pos.is_none() || end_pos == Some(utils::opponent(player)) {
+        let (count, hole_count, tail_count) = self.count_pos(player, row, col, dir, allow_hole);
+        //println!("count: {}", count);
+        if tail_count <= 0 || (count < 5 && 5 - count > tail_count) {
             open_count -= 1;
         }
         Line::new(count, hole_count, open_count)
@@ -147,13 +165,13 @@ impl Board {
         col: usize,
         dir: usize,
         allow_hole: i32,
-    ) -> (u32, i32, Option<u8>) {
+    ) -> (u32, i32, u32) {
         let dirs = vec![vec![0, 1], vec![1, 0], vec![1, 1], vec![-1, 1]];
         let cur = &dirs[dir];
         let mut i = row as i32;
         let mut j = col as i32;
         let mut count = 0;
-        let mut next_pos = None;
+        let mut tail_count = 0;
         let mut hole_count = allow_hole;
         loop {
             let nxt = self.get(i, j);
@@ -166,15 +184,30 @@ impl Board {
                 }
             } else if nxt.is_none() {
                 break;
+            } else if nxt == Some(0) {
+                // try to reach border
+                /*  let mut x = i;
+                let mut y = j;
+                loop {
+                    let n = self.get(x, y);
+                    if n != Some(0) || tail_count >= 3 {
+                        break;
+                    } else {
+                        x += cur[0];
+                        y += cur[1];
+                        tail_count += 1;
+                    }
+                } */
+                tail_count = 1;
+                break;
             } else {
-                next_pos = nxt;
                 break;
             }
         }
         if allow_hole > 0 && hole_count == 0 && self.get_prev(i, j, dir) != Some(player) {
             count -= 1;
         }
-        (count, allow_hole - hole_count, next_pos)
+        (count, allow_hole - hole_count, tail_count)
     }
 
     pub fn get(&self, row: i32, col: i32) -> Option<u8> {

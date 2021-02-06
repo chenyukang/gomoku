@@ -9,7 +9,7 @@ struct Body {
     eval_count: u32,
     move_c: usize,
     move_r: usize,
-    node_count: i32,
+    node_count: u32,
     num_threads: i32,
     pm_count: i32,
     search_depth: i32,
@@ -29,11 +29,11 @@ pub fn solve_it(input: &str, player: u8) -> String {
     let mut ans_score = 0;
     let mut ans_col = 0;
     let mut ans_row = 0;
+    let mut runner = algo::Runner::new(player, 3);
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let mut runner = algo::Runner::new(player, 3);
-        let (score, row, col) = runner.gen_move_negamax(&mut board, player, 3);
+        let (score, row, col) = runner.run_heuristic(&mut board, player, 14);
         board.place(row, col, player);
         if let Some(w) = board.any_winner() {
             println!("winner: {:?}", winner);
@@ -48,10 +48,10 @@ pub fn solve_it(input: &str, player: u8) -> String {
         result: Body {
             ai_player: player,
             cpu_time: String::from("1101"),
-            eval_count: 1000,
+            eval_count: runner.eval_node,
             move_c: ans_col,
             move_r: ans_row,
-            node_count: 100,
+            node_count: runner.eval_node,
             num_threads: 1,
             pm_count: 1,
             search_depth: 9,
