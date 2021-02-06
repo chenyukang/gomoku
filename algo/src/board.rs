@@ -34,7 +34,7 @@ impl Line {
         match (self.count, self.hole_count, self.open_count) {
             (5, 0, _) => 100000,
             (4, 0, 2) => 9900,
-            (4, 1, 2) => 2000,
+            (4, 1, 2) => 1900,
             (3, 0, 2) => 2000,
             (5, 1, _) => 1000,
             (4, 0, 1) => 800,
@@ -321,7 +321,7 @@ mod tests {
 
         board = Board::new(String::from("1111111111"), 5, 2);
         assert_eq!(board.eval(2), 0);
-        assert_eq!(board.eval(1), 20000);
+        assert_eq!(board.eval(1), 200000);
 
         board = Board::new(String::from("10000 01000 00100"), 5, 3);
         assert_eq!(board.eval(1), 100);
