@@ -79,10 +79,10 @@ impl Runner {
     ) -> (i32, usize, usize) {
         self.eval_node += 1;
         if depth <= 0 {
-            let flag = if player == 1 { 1 } else { -1 };
+            let flag = if player == self.player { 1 } else { -1 };
             return (flag * board.eval(player), 0, 0);
         }
-        let mut max_score = std::i32::MIN;
+        let mut max_score = std::i32::MIN / 2;
         let mut move_x = 0;
         let mut move_y = 0;
         //println!("gen_move: {} {}", player, depth);
@@ -218,7 +218,7 @@ mod tests {
 
     fn make_empty_board() -> Board {
         let mut res = String::from("");
-        for _ in 0..(10 * 10) {
+        for _ in 0..(7 * 7) {
             res = res + "0";
         }
         Board::from(res)
