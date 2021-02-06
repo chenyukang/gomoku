@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use super::utils;
 use std::cmp;
 
 #[derive(Debug)]
@@ -133,8 +132,8 @@ impl Board {
             }
             _ => open_count -= 1,
         }
-        let (count, hole_count, end_pos) = self.count_pos(player, row, col, dir, allow_hole);
-        if end_pos.is_none() || end_pos == Some(utils::opponent(player)) {
+        let (count, hole_count, tail_count) = self.count_pos(player, row, col, dir, allow_hole);
+        if tail_count <= 0 || (count < 5 && 5 - count > tail_count) {
             open_count -= 1;
         }
         Line::new(count, hole_count, open_count)
@@ -147,13 +146,13 @@ impl Board {
         col: usize,
         dir: usize,
         allow_hole: i32,
-    ) -> (u32, i32, Option<u8>) {
+    ) -> (u32, i32, u32) {
         let dirs = vec![vec![0, 1], vec![1, 0], vec![1, 1], vec![-1, 1]];
         let cur = &dirs[dir];
         let mut i = row as i32;
         let mut j = col as i32;
         let mut count = 0;
-        let mut next_pos = None;
+        let mut tail_count = 0;
         let mut hole_count = allow_hole;
         loop {
             let nxt = self.get(i, j);
@@ -166,15 +165,31 @@ impl Board {
                 }
             } else if nxt.is_none() {
                 break;
+            } else if nxt == Some(0) {
+                let mut x = i;
+                let mut y = j;
+                loop {
+                    if tail_count >= 4 {
+                        break;
+                    }
+                    let n = self.get(x, y);
+                    if n == Some(0) {
+                        x += cur[0];
+                        y += cur[1];
+                        tail_count += 1;
+                    } else {
+                        break;
+                    }
+                }
+                break;
             } else {
-                next_pos = nxt;
                 break;
             }
         }
         if allow_hole > 0 && hole_count == 0 && self.get_prev(i, j, dir) != Some(player) {
             count -= 1;
         }
-        (count, allow_hole - hole_count, next_pos)
+        (count, allow_hole - hole_count, tail_count)
     }
 
     pub fn get(&self, row: i32, col: i32) -> Option<u8> {
@@ -339,18 +354,25 @@ mod tests {
         assert_eq!(board.eval(1), 100);
 
         board = Board::new(String::from("10000 01000 00100 00000"), 5, 4);
+        assert_eq!(board.eval(1), 100);
+
+        board = Board::new(String::from("10000 01000 00100 00000 00000"), 5, 5);
         assert_eq!(board.eval(1), 500);
 
         board = Board::new(String::from("10000 01100 00100 00000"), 5, 4);
-        assert_eq!(board.eval(1), 660);
+        assert_eq!(board.eval(1), 120);
 
-        board = Board::new(String::from("00000 01110 01110 01110 00000"), 5, 5);
-        assert_eq!(board.eval(1), 16320);
+        board = Board::new(
+            String::from("000000 011100 011100 011100 000000 000000"),
+            6,
+            6,
+        );
+        assert_eq!(board.eval(1), 14540);
 
         board = Board::new(String::from("101100 000000"), 6, 2);
-        assert_eq!(board.eval(1), 1080);
+        assert_eq!(board.eval(1), 1010);
 
-        board = Board::new(String::from("101110 000000"), 6, 2);
+        board = Board::new(String::from("1011100 0000000"), 7, 2);
         assert_eq!(board.eval(1), 3000);
     }
 }
