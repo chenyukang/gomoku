@@ -31,7 +31,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
     let mut ans_score = 0;
     let mut ans_col = 0;
     let mut ans_row = 0;
-    let mut runner = algo::Runner::new(player, 10);
+    let mut runner = algo::Runner::new(player, 4);
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
@@ -69,10 +69,11 @@ pub fn battle() {
     let opponent = 1;
     let me = 2;
     board.place(7, 7, 1);
-    let mut runner = algo::Runner::new(2, 10);
+    let mut runner = algo::Runner::new(2, 2);
     //println!("board: {}", board.to_string());
     loop {
         let (_, row, col) = runner.run_heuristic(&mut board, me);
+        println!("+ row: {:?} col: {:?}", row, col);
         board.place(row, col, me);
         board.print();
         if let Some(w) = board.any_winner() {
@@ -100,7 +101,7 @@ pub fn battle() {
 
         let row = row_str.parse::<i32>().unwrap();
         let col = col_str.parse::<i32>().unwrap();
-        println!("row: {:?} col: {:?}", row, col);
+        println!("o row: {:?} col: {:?}", row, col);
         board.place(row as usize, col as usize, opponent);
         board.print();
         if let Some(w) = board.any_winner() {

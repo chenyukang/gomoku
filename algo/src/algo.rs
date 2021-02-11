@@ -3,6 +3,7 @@
 use super::board::*;
 use super::utils;
 use rand::prelude::*;
+use std::cmp;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Move {
@@ -23,7 +24,7 @@ impl Move {
     }
 
     pub fn is_threaten(&self) -> bool {
-        self.max_single >= 9900
+        self.score >= 2000
     }
 }
 
@@ -120,12 +121,17 @@ impl Runner {
                     continue;
                 }
                 board.place(i, j, player);
-                let (score, max_single) = board.eval(player);
+                let (_, max_single) = board.eval(player);
                 board.place(i, j, 0);
-                moves.push(Move::new(i, j, score, max_single));
+                moves.push(Move::new(i, j, max_single, max_single));
             }
         }
         moves.sort_by(|a, b| b.score.cmp(&a.score));
+        /* println!("begin ===============");
+        for i in 0..moves.len() {
+            println!("player: {} candidates: {:?}", player, moves[i]);
+        }
+        println!("end ====================="); */
         moves
     }
 
@@ -148,18 +154,23 @@ impl Runner {
         alpha: i32,
         beta: i32,
     ) -> (i32, usize, usize) {
+        /* println!(
+            "gen_move_heuristic: {} {} {} {}",
+            player, depth, alpha, beta
+        ); */
         self.eval_node += 1;
         if depth <= 0 {
-            return (board.eval_all(player), 0, 0);
+            //  println!("return now: {}", player);
+            let flag = if player == self.player { 1 } else { -1 };
+            return (flag * board.eval_all(player), 0, 0);
         }
         let mut max_score = std::i32::MIN;
         let mut final_move = Move::new(0, 0, 0, 0);
         let mut cur_alpha = alpha;
         let dead_score = 100000;
-        let threatening_score = 3500;
         let mut block_move = None;
         let mut best_moves: Vec<Move> = vec![];
-        let candidates = self.gen_ordered_moves(board, player);
+        let mut candidates = self.gen_ordered_moves(board, player);
         if candidates.len() == 1 || candidates[0].score >= dead_score {
             return (candidates[0].score, candidates[0].x, candidates[0].y);
         }
@@ -167,28 +178,37 @@ impl Runner {
         let opponent_candidates = self.gen_ordered_moves(board, utils::opponent(player));
         // If there are more than 2 threatening choices for opponent, we must lose the game
         // Anyway, try to block the first threatening choice
-        if opponent_candidates.len() >= 1 && opponent_candidates[0].score >= threatening_score {
-            block_move = Some(opponent_candidates[0]);
+        if opponent_candidates.len() >= 1 && opponent_candidates[0].is_threaten() {
+            let size = cmp::min(opponent_candidates.len(), 2);
+            for i in 0..size {
+                let mut mv = opponent_candidates[i];
+                board.place(mv.x, mv.y, player);
+                let (_, max_single) = board.eval(player);
+                board.place(mv.x, mv.y, 0);
+                mv.score = max_single;
+                candidates.push(opponent_candidates[i]);
+            }
+            block_move = candidates.last();
         }
 
         for i in 0..candidates.len() {
             let mut mv = candidates[i];
             board.place(mv.x, mv.y, player);
             let mut opponent_score = 0;
-            if depth >= 1 {
+            if depth > 1 {
                 let (s, _, _) = self.gen_move_heuristic(
                     board,
                     utils::opponent(player),
+                    depth - 1,
                     -beta,
                     -cur_alpha + mv.score,
-                    depth - 1,
                 );
                 opponent_score = s;
             }
             board.place(mv.x, mv.y, 0);
-            mv.score -= opponent_score;
+            mv.score = -opponent_score;
             if mv.score > max_score {
-                println!("opponent_score: {}", opponent_score);
+                //println!("opponent_score: {}", opponent_score);
                 max_score = mv.score;
                 final_move = mv;
                 best_moves.clear();
@@ -197,30 +217,36 @@ impl Runner {
                 best_moves.push(mv);
             }
             cur_alpha = std::cmp::max(cur_alpha, max_score);
-            if cur_alpha > beta {
+            if cur_alpha >= beta {
                 break;
             }
         }
-        println!(
-            "final_move: {:?} move_threaten: {:?} depth: {}",
-            final_move,
-            final_move.is_threaten(),
-            depth
-        );
+        /* println!(
+            "+Block move: {:?} \n {:?} depth:{} self.depth:{}",
+            block_move, final_move, depth, self.depth,
+        ); */
         if depth == self.depth
             && block_move.is_some()
-            && ((9900 <= block_move.unwrap().score && !final_move.is_threaten())
-                || block_move.unwrap().score >= dead_score)
+            && block_move.unwrap().is_threaten()
+            && max_score < 0
         {
-            println!("use block move: {:?}", block_move);
-            final_move = block_move.unwrap();
+            println!("Use block move: {:?}", block_move);
+            final_move = *block_move.unwrap();
+            max_score = final_move.score;
         } else if best_moves.len() > 1 {
             //choose a random step
             let mut rng = thread_rng();
             let idx: usize = rng.gen_range(0, best_moves.len());
             final_move = best_moves[idx];
-            println!("random choose one: {} from {}", idx, best_moves.len());
         }
+        let mut prev = String::from("");
+        for _ in 0..(self.depth - depth) {
+            prev += "---";
+        }
+        /* println!(
+            "{}Player: {} depth:{} -> Final move: {} {:?}",
+            prev, player, depth, max_score, final_move
+        ); */
         (max_score, final_move.x, final_move.y)
     }
 }
@@ -236,7 +262,7 @@ mod tests {
         Board::from(res)
     }
 
-    #[allow(unused_assignments)]
+    /* #[allow(unused_assignments)]
     #[test]
     fn test_algo() {
         let mut board = make_empty_board();
@@ -265,5 +291,5 @@ mod tests {
             board.empty_cells_count()
         );
         assert_eq!(winner, 1);
-    }
+    } */
 }

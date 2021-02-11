@@ -44,7 +44,7 @@ async fn process_handler(req: Request<Body>) -> Result<Response<Body>, hyper::Er
 pub async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     pretty_env_logger::init();
 
-    let addr = ([127, 0, 0, 1], 8001).into();
+    let addr = ([127, 0, 0, 1], 8002).into();
 
     let server = Server::bind(&addr).serve(make_service_fn(|_| async {
         Ok::<_, hyper::Error>(service_fn(process_handler))

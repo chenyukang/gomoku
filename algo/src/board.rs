@@ -35,17 +35,14 @@ impl Line {
             (v, 1, _) if v >= 6 => 9900,
             (5, 0, _) => 100000,
             (4, 0, 2) => 9900,
-            (4, 1, 2) => 1900,
+            (4, 1, 2) => 2000,
             (3, 0, 2) => 2000,
-            (5, 1, _) => 1000,
-            (4, 0, 1) => 800,
-            (4, 1, 1) => 500,
+            (5, 1, _) => 8000,
+            (4, 0, 1) => 1200,
+            (4, 1, 1) => 1000,
             (3, 0, 1) => 100,
-            (3, 0, 0) => 20,
-            (3, 1, 2) => 40,
-            (3, 1, 0) => 30,
-            (2, 0, 2) => 80,
-            (2, 0, 1) => 10,
+            (3, 1, _) => 30,
+            (2, 0, 2) => 10,
             (_, _, _) => 0,
         }
     }
@@ -294,9 +291,9 @@ impl Board {
             let mut res = "".to_string();
             for j in 0..self.width {
                 let cell = match self.cells[i][j] {
-                    1 => 'O',
-                    2 => '+',
-                    _ => '.',
+                    1 => " o",
+                    2 => " +",
+                    _ => " .",
                 };
                 res += format!("{}", cell).as_str();
             }
@@ -408,35 +405,81 @@ mod tests {
     fn test_board_score() {
         let mut board = Board::new(String::from("1111000000"), 5, 2);
         assert_eq!(board.eval_all(2), 0);
-        assert_eq!(board.eval_all(1), 800);
+        assert_eq!(board.eval_all(1), 1200);
 
         board = Board::new(String::from("1111111111"), 5, 2);
         assert_eq!(board.eval_all(2), 0);
         assert_eq!(board.eval_all(1), 200000);
 
         board = Board::new(String::from("10000 01000 00100"), 5, 3);
-        assert_eq!(board.eval_all(1), 80);
+        assert_eq!(board.eval_all(1), 0);
 
         board = Board::new(String::from("10000 01000 00100 00000"), 5, 4);
-        assert_eq!(board.eval_all(1), 80);
+        assert_eq!(board.eval_all(1), 30);
 
         board = Board::new(String::from("10000 01000 00100 00000 00000"), 5, 5);
-        assert_eq!(board.eval_all(1), 500);
+        assert_eq!(board.eval_all(1), 100);
 
         board = Board::new(String::from("10000 01100 00100 00000"), 5, 4);
-        assert_eq!(board.eval_all(1), 100);
+        assert_eq!(board.eval_all(1), 30);
 
         board = Board::new(
             String::from("000000 011100 011100 011100 000000 000000"),
             6,
             6,
         );
-        assert_eq!(board.eval_all(1), 14540);
+        assert_eq!(board.eval_all(1), 14100);
 
         board = Board::new(String::from("101100 000000"), 6, 2);
-        assert_eq!(board.eval_all(1), 510);
+        assert_eq!(board.eval_all(1), 1000);
 
         board = Board::new(String::from("1011100 0000000"), 7, 2);
-        assert_eq!(board.eval_all(1), 3000);
+        assert_eq!(board.eval_all(1), 10000);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0001000
+        0001000
+        0022000
+        0000000
+        ",
+            ),
+            7,
+            5,
+        );
+        assert_eq!(board.eval_all(1), 0);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0001000
+        0001000
+        0020000
+        0000000
+        ",
+            ),
+            7,
+            5,
+        );
+        assert_eq!(board.eval_all(1), 0);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0001000
+        0001000
+        0020000
+        0000000
+        0000000
+        ",
+            ),
+            7,
+            6,
+        );
+        assert_eq!(board.eval_all(1), 10);
     }
 }
