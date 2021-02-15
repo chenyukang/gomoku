@@ -1,5 +1,7 @@
 #![allow(dead_code)]
+use super::utils;
 use std::cmp;
+use std::cmp::Ordering;
 
 #[derive(Debug)]
 pub struct Board {
@@ -11,26 +13,26 @@ pub struct Board {
 #[derive(Debug)]
 struct Line {
     count: u32,
-    hole_count: i32,
-    open_count: i32,
+    space_count: i32,
+    block_count: i32,
 }
 
 impl Line {
-    pub fn new(count: u32, hole_count: i32, open_count: i32) -> Self {
+    pub fn new(count: u32, space_count: i32, block_count: i32) -> Self {
         Self {
             count: count,
-            hole_count: hole_count,
-            open_count: open_count,
+            space_count: space_count,
+            block_count: block_count,
         }
     }
 
     pub fn is_non_refutable(&self) -> bool {
-        (self.count >= 5 && self.hole_count == 0)
-            || (self.count == 4 && self.hole_count == 0 && self.open_count == 2)
+        (self.count >= 5 && self.space_count == 0)
+            || (self.count == 4 && self.space_count == 0 && self.block_count == 2)
     }
 
     pub fn score(&self) -> u32 {
-        match (self.count, self.hole_count, self.open_count) {
+        match (self.count, self.space_count, self.block_count) {
             (v, 0, _) if v >= 6 => 100000,
             (v, 1, _) if v >= 6 => 9900,
             (5, 0, _) => 100000,
@@ -45,6 +47,25 @@ impl Line {
             (2, 0, 2) => 10,
             (_, _, _) => 0,
         }
+    }
+
+    pub fn compare(&self, other: Line) -> Ordering {
+        if self.count != other.count {
+            return self.count.cmp(&other.count);
+        } else if self.space_count != other.space_count {
+            if self.space_count < other.space_count {
+                return Ordering::Greater;
+            } else {
+                return Ordering::Less;
+            }
+        } else if self.block_count != other.block_count {
+            if self.block_count < other.block_count {
+                return Ordering::Greater;
+            } else {
+                return Ordering::Less;
+            }
+        }
+        Ordering::Equal
     }
 }
 
@@ -142,24 +163,100 @@ impl Board {
         score
     }
 
+    fn eval_direction(
+        &self,
+        player: u8,
+        row: usize,
+        col: usize,
+        dx: i32,
+        dy: i32,
+        consecutive: bool,
+    ) -> Line {
+        assert!(self.get(row as i32, col as i32) == Some(player));
+        let mut cur_x = row as i32;
+        let mut cur_y = col as i32;
+        let mut space_allow = if consecutive { 1 } else { 0 };
+        let mut len = 1;
+        let mut block_count = 0;
+        let mut space_count = 0;
+        let mut reversed = false;
+        loop {
+            if reversed {
+                break;
+            }
+            loop {
+                if reversed {
+                    cur_x -= dx;
+                    cur_y -= dy;
+                } else {
+                    cur_x += dx;
+                    cur_y += dy;
+                }
+                let cell = self.get(cur_x, cur_y);
+                if cell == Some(0) {
+                    if space_allow > 0 && self.get(cur_x + dx, cur_y + dy) == Some(player) {
+                        space_allow -= 1;
+                        space_count += 1;
+                        continue;
+                    } else {
+                        block_count += 1;
+                        break;
+                    }
+                } else if cell != Some(player) {
+                    block_count += 1;
+                    break;
+                } else {
+                    len += 1;
+                }
+            }
+            reversed = true;
+            cur_x = row as i32;
+            cur_y = col as i32;
+        }
+        Line::new(len, space_count, block_count)
+    }
+
+    fn eval_all_directions(&self, player: u8, row: usize, col: usize) -> Vec<Line> {
+        let dirs = utils::DIRS;
+        let revs = utils::REV_DIRS;
+        let mut res = vec![];
+        for i in 0..dirs.len() {
+            let d = &dirs[i];
+            let r = &revs[i];
+            let line = self.eval_direction(player, row, col, d[0], d[1], true);
+            res.push(line);
+
+            // If we allow on space in row, different direction will generate different result
+            // One possible way is try to get the better one
+            let l1 = self.eval_direction(player, row, col, d[0], d[1], false);
+            let l2 = self.eval_direction(player, row, col, r[0], r[1], false);
+            if l1.count > l2.count {
+                res.push(l1);
+            } else {
+                res.push(l2);
+            }
+        }
+        res
+    }
+
     // Open direction should consider board width and height
     fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
-        let mut open_count: u32 = 2;
+        let mut block_count: u32 = 2;
         match self.get_prev(row as i32, col as i32, dir) {
             Some(v) => {
                 if v == player {
                     return Line::new(0, 0, 0);
                 } else if v != 0 {
-                    open_count -= 1;
+                    block_count -= 1;
                 }
             }
-            _ => open_count -= 1,
+            _ => block_count -= 1,
         }
-        let (count, hole_count, tail_count) = self.count_pos(player, row, col, dir, allow_hole);
+        let (count, space_count, tail_count) = self.count_pos(player, row, col, dir, allow_hole);
         if tail_count <= 0 || (count + tail_count < 5) {
-            open_count -= 1;
+            block_count -= 1;
         }
-        let res = Line::new(count, hole_count, open_count as i32);
+        let res = Line::new(count, space_count, block_count as i32);
         /* if res.count >= 2 {
             println!("line: {:?}", res);
         } */
@@ -174,21 +271,21 @@ impl Board {
         dir: usize,
         allow_hole: i32,
     ) -> (u32, i32, u32) {
-        let dirs = vec![vec![0, 1], vec![1, 0], vec![1, 1], vec![-1, 1]];
+        let dirs = utils::DIRS;
         let cur = &dirs[dir];
         let mut i = row as i32;
         let mut j = col as i32;
         let mut count = 0;
         let mut tail_count = 0;
-        let mut hole_count = allow_hole;
+        let mut space_count = allow_hole;
         loop {
             let nxt = self.get(i, j);
-            if nxt == Some(player) || (count > 0 && hole_count > 0 && nxt == Some(0)) {
+            if nxt == Some(player) || (count > 0 && space_count > 0 && nxt == Some(0)) {
                 count += 1;
                 i += cur[0];
                 j += cur[1];
                 if nxt == Some(0) {
-                    hole_count -= 1;
+                    space_count -= 1;
                 }
             } else if nxt.is_none() {
                 break;
@@ -213,10 +310,10 @@ impl Board {
                 break;
             }
         }
-        if allow_hole > 0 && hole_count == 0 && self.get_prev(i, j, dir) != Some(player) {
+        if allow_hole > 0 && space_count == 0 && self.get_prev(i, j, dir) != Some(player) {
             count -= 1;
         }
-        (count, allow_hole - hole_count, tail_count)
+        (count, allow_hole - space_count, tail_count)
     }
 
     pub fn get(&self, row: i32, col: i32) -> Option<u8> {
@@ -228,9 +325,9 @@ impl Board {
     }
 
     fn get_prev(&self, row: i32, col: i32, dir: usize) -> Option<u8> {
-        let rev_dirs = vec![vec![0, -1], vec![-1, 0], vec![-1, -1], vec![1, -1]];
-        let p_row = row as i32 + rev_dirs[dir][0];
-        let p_col = col as i32 + rev_dirs[dir][1];
+        let revs = utils::REV_DIRS;
+        let p_row = row as i32 + revs[dir][0];
+        let p_col = col as i32 + revs[dir][1];
         self.get(p_row, p_col)
     }
 
@@ -243,22 +340,11 @@ impl Board {
     }
 
     pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
-        let dirs = vec![
-            vec![0, 1],
-            vec![1, 0],
-            vec![1, 1],
-            vec![-1, 1],
-            vec![0, -1],
-            vec![-1, 0],
-            vec![-1, -1],
-            vec![1, -1],
-        ];
-        for d in 1..2 {
-            for k in 0..8 {
-                let p = self.get(row as i32 + dirs[k][0] * d, col as i32 + dirs[k][1] * d);
-                if !p.is_none() && p != Some(0) {
-                    return false;
-                }
+        let dirs = utils::ALL_DIRS;
+        for k in 0..8 {
+            let p = self.get(row as i32 + dirs[k][0], col as i32 + dirs[k][1]);
+            if !p.is_none() && p != Some(0) {
+                return false;
             }
         }
         true
