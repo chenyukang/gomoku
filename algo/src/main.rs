@@ -29,38 +29,24 @@ fn main() {
 
     if matches.occurrences_of("battle") > 0 {
         control::battle();
-        return;
-    }
-
-    if matches.occurrences_of("rev_battle") > 0 {
+    } else if matches.occurrences_of("rev_battle") > 0 {
         control::rev_battle();
-        return;
-    }
-    if matches.occurrences_of("self_battle") > 0 {
+    } else if matches.occurrences_of("self_battle") > 0 {
         control::battle_self();
-        return;
-    }
-
-    if matches.occurrences_of("other_self_battle") > 0 {
+    } else if matches.occurrences_of("other_self_battle") > 0 {
         control::battle_other_self();
-        return;
-    }
-
-    if let Some(depth) = matches.value_of("depth") {
-        search_depth = depth.parse::<i32>().unwrap();
-    }
-
-    if let Some(width) = matches.value_of("width") {
-        board_width = width.parse::<usize>().unwrap();
-    }
-
-    if let Some(height) = matches.value_of("height") {
-        board_height = height.parse::<usize>().unwrap();
-    }
-
-    if matches.occurrences_of("server") > 0 {
+    } else if matches.occurrences_of("server") > 0 {
         let _ = server::run_server();
     } else {
+        if let Some(depth) = matches.value_of("depth") {
+            search_depth = depth.parse::<i32>().unwrap();
+        }
+        if let Some(width) = matches.value_of("width") {
+            board_width = width.parse::<usize>().unwrap();
+        }
+        if let Some(height) = matches.value_of("height") {
+            board_height = height.parse::<usize>().unwrap();
+        }
         if let Some(input) = matches.value_of("input") {
             let board = board::Board::new(input.to_string(), board_width, board_height);
             print!("created board: {:?} with depth: {}", board, search_depth);
