@@ -168,10 +168,6 @@ impl Runner {
         alpha: i32,
         beta: i32,
     ) -> (i32, usize, usize) {
-        /* println!(
-            "gen_move_heuristic: {} {} {} {}",
-            player, depth, alpha, beta
-        ); */
         self.eval_node += 1;
         let mut max_score = std::i32::MIN;
         let mut final_move = Move::new(0, 0, 0, 0);
@@ -194,15 +190,6 @@ impl Runner {
         // If there are more than 2 threatening choices for opponent, we must lose the game
         // Anyway, try to block the first threatening choice
         if opponent_candidates.len() >= 1 && opponent_candidates[0].is_threaten() {
-            let size = min(opponent_candidates.len(), 2);
-            for i in 0..size {
-                let mut mv = opponent_candidates[i];
-                board.place(mv.x, mv.y, player);
-                let score = board.eval_pos(player, mv.x, mv.y);
-                board.place(mv.x, mv.y, 0);
-                mv.score = score as i32;
-                candidates.push(mv);
-            }
             block_move = opponent_candidates.first();
         }
 
