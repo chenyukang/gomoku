@@ -1,14 +1,6 @@
 #![allow(dead_code)]
 use super::utils;
-use std::cmp;
 use std::cmp::Ordering;
-
-#[derive(Debug)]
-pub struct Board {
-    pub width: usize,
-    pub height: usize,
-    cells: Vec<Vec<u8>>,
-}
 
 #[derive(Debug)]
 struct Line {
@@ -26,25 +18,36 @@ impl Line {
         }
     }
 
+    pub fn is_winner_step(&self) -> bool {
+        self.count >= 5 && self.space_count == 0
+    }
+
     pub fn is_non_refutable(&self) -> bool {
-        (self.count >= 5 && self.space_count == 0)
-            || (self.count == 4 && self.space_count == 0 && self.open_count == 2)
+        self.count == 4 && self.space_count == 0 && self.open_count == 2
+    }
+
+    pub fn must_be_blocked(&self) -> bool {
+        match (self.count, self.space_count, self.open_count) {
+            (3, 0, 2) => true,
+            (3, 1, 2) => true,
+            (4, 1, _) => true,
+            (4, 0, v) if v > 0 => true,
+            (_, _, _) => false,
+        }
     }
 
     pub fn score(&self) -> u32 {
         match (self.count, self.space_count, self.open_count) {
-            (v, 0, _) if v >= 6 => 100000,
-            (v, 1, _) if v >= 6 => 9900,
-            (5, 0, _) => 100000,
-            (4, 0, 2) => 9900,
-            (4, 1, 2) => 2000,
-            (3, 0, 2) => 2000,
-            (5, 1, _) => 8000,
-            (4, 0, 1) => 1200,
-            (4, 1, 1) => 1000,
-            (3, 0, 1) => 100,
-            (3, 1, _) => 30,
-            (2, 0, 2) => 10,
+            (v, 0, _) if v >= 5 => 11000,
+            (v, 1, _) if v >= 5 => 2000,
+            (4, 0, 2) => 10000,
+            (4, 1, 2) => 1000,
+            (4, 0, 1) => 1000,
+            (3, 0, 2) => 40,
+            (4, 1, 1) => 30,
+            (3, 0, 1) => 30,
+            (3, 1, _) => 40,
+            (2, 0, 2) => 40,
             (_, _, _) => 0,
         }
     }
@@ -66,10 +69,28 @@ impl PartialEq for Line {
     }
 }
 
+#[derive(Debug)]
+pub struct Board {
+    pub width: usize,
+    pub height: usize,
+    cells: Vec<Vec<u8>>,
+}
+
 impl Board {
     pub fn new(input: String, width: usize, height: usize) -> Self {
         let rows: Vec<u8> = input
             .chars()
+            .map(|e| {
+                if e == '.' {
+                    '0'
+                } else if e == 'o' {
+                    '1'
+                } else if e == '+' {
+                    '2'
+                } else {
+                    e
+                }
+            })
             .filter(|&e| e == '0' || e == '1' || e == '2')
             .map(|e| e as u8 - '0' as u8)
             .collect();
@@ -105,10 +126,13 @@ impl Board {
         for i in 0..self.height {
             for j in 0..self.width {
                 for p in 1..3 {
-                    for k in 0..4 {
-                        let (count, _, _) = self.count_pos(p, i, j, k, 0);
-                        if count >= 5 {
-                            return Some(p);
+                    if self.get(i as i32, j as i32) == Some(p) {
+                        for k in 0..4 {
+                            let d = utils::DIRS[k];
+                            let line = self.connect_direction(p, i, j, d[0], d[1], true);
+                            if line.count >= 5 {
+                                return Some(p);
+                            }
                         }
                     }
                 }
@@ -117,50 +141,19 @@ impl Board {
         None
     }
 
-    pub fn eval_all(&self, player: u8) -> i32 {
-        let (score, _) = self.eval(player);
-        score
-    }
-
-    pub fn eval(&self, player: u8) -> (i32, i32) {
-        let mut score: i32 = 0;
-        let mut max_single: i32 = 0;
+    pub fn eval_all(&mut self, player: u8) -> u32 {
+        let mut score = 0;
         for i in 0..self.height {
             for j in 0..self.width {
-                for k in 0..4 {
-                    score += 0;
-                    let line1 = self.make_line(player, i, j, k, 0);
-                    let line2 = self.make_line(player, i, j, k, 1);
-                    let score1 = line1.score();
-                    let score2 = line2.score();
-                    score += cmp::max(score1 as i32, score2 as i32);
-                    max_single = cmp::max(max_single, cmp::max(score1 as i32, score2 as i32));
+                if self.get(i as i32, j as i32) == Some(player) {
+                    score += self.eval_pos(player, i, j);
                 }
             }
         }
-        //println!("score: {}", score);
-        return (score, max_single);
-    }
-
-    pub fn best_move(&self, player: u8) -> i32 {
-        let mut score: i32 = 0;
-        for i in 0..self.height {
-            for j in 0..self.width {
-                for k in 0..4 {
-                    score += 0;
-                    let line1 = self.make_line(player, i, j, k, 0);
-                    let line2 = self.make_line(player, i, j, k, 1);
-                    let score1 = line1.score();
-                    let score2 = line2.score();
-                    score = cmp::max(score, cmp::max(score1 as i32, score2 as i32));
-                }
-            }
-        }
-        //println!("score: {}", score);
         score
     }
 
-    fn eval_direction(
+    fn connect_direction(
         &self,
         player: u8,
         row: usize,
@@ -174,7 +167,7 @@ impl Board {
         let mut cur_y = col as i32;
         let mut flag = 1;
         let mut lefted_space = 0;
-        let mut space_allow = if consecutive { 1 } else { 0 };
+        let mut space_allow = if consecutive { 0 } else { 1 };
         let mut len = 1;
         let mut open_count = 2;
         let mut space_count = 0;
@@ -218,30 +211,82 @@ impl Board {
         if len + space_count + lefted_space < 5 {
             open_count = 0;
         }
+        if len >= 5 {
+            if space_count == 0 {
+                len = 5;
+                open_count = 2;
+            } else {
+                len = 4;
+                open_count = 1;
+            }
+        }
+
         Line::new(len, space_count, open_count)
     }
 
-    fn eval_all_directions(&self, player: u8, row: usize, col: usize) -> Vec<Line> {
+    fn connect_all_directions(&self, player: u8, row: usize, col: usize) -> Vec<Line> {
         let dirs = utils::DIRS;
         let revs = utils::REV_DIRS;
         let mut res = vec![];
         for i in 0..dirs.len() {
             let d = &dirs[i];
             let r = &revs[i];
-            let line = self.eval_direction(player, row, col, d[0], d[1], true);
-            res.push(line);
-
+            let l0 = self.connect_direction(player, row, col, d[0], d[1], true);
             // If we allow on space in row, different direction will generate different result,
             // One possible way is try to get the better one
-            let l1 = self.eval_direction(player, row, col, d[0], d[1], false);
-            let l2 = self.eval_direction(player, row, col, r[0], r[1], false);
-            if l1.cmp(&l2) == Ordering::Greater {
-                res.push(l1);
+            let l1 = self.connect_direction(player, row, col, d[0], d[1], false);
+            let l2 = self.connect_direction(player, row, col, r[0], r[1], false);
+
+            let l = if l1.cmp(&l2) == Ordering::Greater {
+                l1
             } else {
-                res.push(l2);
-            }
+                l2
+            };
+            let line = if l.cmp(&l0) == Ordering::Greater {
+                l
+            } else {
+                l0
+            };
+            res.push(line);
         }
         res
+    }
+
+    pub fn eval_pos(&mut self, player: u8, row: usize, col: usize) -> u32 {
+        let mut score = 0;
+        let mut must_blocked = 0;
+        let mut two_count = 0;
+        let mut must_blocked_sum_count = 0;
+        let lines = self.connect_all_directions(player, row, col);
+        assert!(lines.len() <= 4);
+        for i in 0..lines.len() {
+            let line = &lines[i];
+            if line.is_winner_step() {
+                return 100000;
+            }
+        }
+        for i in 0..lines.len() {
+            let line = &lines[i];
+            //println!("i: {} line: {:?}", i, line);
+            if line.is_non_refutable() {
+                return 90000;
+            }
+            if line.must_be_blocked() {
+                must_blocked += 1;
+                must_blocked_sum_count += line.count;
+            }
+            if line.count == 0 && line.open_count >= 1 {
+                two_count += 1;
+            }
+            score += line.score();
+        }
+        if must_blocked >= 2 {
+            return must_blocked_sum_count * 1000;
+        }
+        if two_count >= 3 {
+            score += 40;
+        }
+        return score;
     }
 
     // Open direction should consider board width and height
@@ -262,9 +307,6 @@ impl Board {
             open_count -= 1;
         }
         let res = Line::new(count, space_count as u32, open_count);
-        /* if res.count >= 2 {
-            println!("line: {:?}", res);
-        } */
         res
     }
 
@@ -346,10 +388,12 @@ impl Board {
 
     pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
         let dirs = utils::ALL_DIRS;
-        for k in 0..8 {
-            let p = self.get(row as i32 + dirs[k][0], col as i32 + dirs[k][1]);
-            if !p.is_none() && p != Some(0) {
-                return false;
+        for d in 1..3 {
+            for k in 0..8 {
+                let p = self.get(row as i32 + dirs[k][0] * d, col as i32 + dirs[k][1] * d);
+                if !p.is_none() && p != Some(0) {
+                    return false;
+                }
             }
         }
         true
@@ -416,10 +460,10 @@ mod tests {
     #[test]
     fn test_line() {
         let mut line = Line::new(5, 0, 0);
-        assert_eq!(line.is_non_refutable(), true);
+        assert_eq!(line.is_non_refutable(), false);
 
         line = Line::new(5, 0, 1);
-        assert_eq!(line.is_non_refutable(), true);
+        assert_eq!(line.is_non_refutable(), false);
 
         line = Line::new(5, 1, 0);
         assert_eq!(line.is_non_refutable(), false);
@@ -504,44 +548,114 @@ mod tests {
         board = Board::new(String::from("22222 00001 00010 00100 01000 10000"), 5, 6);
         assert_eq!(board.any_winner(), Some(2));
 
-        board = Board::new(String::from("10000 10001 01021 00001 00001 00001"), 5, 6);
+        board = Board::new(
+            String::from(
+                "
+        10000
+        10001
+        01021
+        00001
+        00001
+        00001",
+            ),
+            5,
+            6,
+        );
+
+        let line = board.connect_direction(1, 1, 4, 1, 0, true);
+        assert_eq!(line.count, 5);
         assert_eq!(board.any_winner(), Some(1));
     }
 
     #[test]
     fn test_board_score() {
-        let mut board = Board::new(String::from("1111000000"), 5, 2);
-        assert_eq!(board.eval_all(2), 0);
-        assert_eq!(board.eval_all(1), 1200);
+        let mut board = Board::new(String::from("1111020000"), 5, 2);
+        assert_eq!(board.eval_pos(1, 0, 0), 1000);
+        assert_eq!(board.eval_pos(2, 1, 0), 0);
 
         board = Board::new(String::from("1111111111"), 5, 2);
         assert_eq!(board.eval_all(2), 0);
-        assert_eq!(board.eval_all(1), 200000);
+        assert_eq!(board.eval_all(1), 1000000);
 
         board = Board::new(String::from("10000 01000 00100"), 5, 3);
         assert_eq!(board.eval_all(1), 0);
 
-        board = Board::new(String::from("10000 01000 00100 00000"), 5, 4);
-        assert_eq!(board.eval_all(1), 30);
-
-        board = Board::new(String::from("10000 01000 00100 00000 00000"), 5, 5);
-        assert_eq!(board.eval_all(1), 100);
-
-        board = Board::new(String::from("10000 01100 00100 00000"), 5, 4);
-        assert_eq!(board.eval_all(1), 30);
+        board = Board::new(
+            String::from(
+                "
+        10000
+        01000
+        00100
+        00000",
+            ),
+            5,
+            4,
+        );
+        assert_eq!(board.eval_all(1), 0);
 
         board = Board::new(
-            String::from("000000 011100 011100 011100 000000 000000"),
+            String::from(
+                "
+        10000
+        01000
+        00100
+        00000
+        00000",
+            ),
+            5,
+            5,
+        );
+        assert_eq!(board.eval_all(1), 90);
+
+        board = Board::new(
+            String::from(
+                "
+        10000
+        01100
+        00100
+        00000",
+            ),
+            5,
+            4,
+        );
+        assert_eq!(board.eval_all(1), 80);
+
+        board = Board::new(
+            String::from(
+                "
+            000000
+            011100
+            011100
+            011100
+            000000
+            000000",
+            ),
             6,
             6,
         );
-        assert_eq!(board.eval_all(1), 14100);
+        assert_eq!(board.eval_all(1), 72000);
 
-        board = Board::new(String::from("101100 000000"), 6, 2);
-        assert_eq!(board.eval_all(1), 1000);
+        board = Board::new(
+            String::from(
+                "
+        101100
+        000000",
+            ),
+            6,
+            2,
+        );
+        assert_eq!(board.eval_all(1), 120);
 
-        board = Board::new(String::from("1011100 0000000"), 7, 2);
-        assert_eq!(board.eval_all(1), 10000);
+        board = Board::new(
+            String::from(
+                "
+        1011100
+        0000000",
+            ),
+            7,
+            2,
+        );
+        assert_eq!(board.eval_all(1), 150);
 
         board = Board::new(
             String::from(
@@ -564,6 +678,21 @@ mod tests {
         0000000
         0001000
         0001000
+        0111000
+        0000000
+        ",
+            ),
+            7,
+            5,
+        );
+        assert_eq!(board.eval_pos(1, 3, 3), 6000);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0001000
+        0001000
         0020000
         0000000
         ",
@@ -571,7 +700,7 @@ mod tests {
             7,
             5,
         );
-        assert_eq!(board.eval_all(1), 0);
+        assert_eq!(board.eval_all(1), 80);
 
         board = Board::new(
             String::from(
@@ -587,7 +716,7 @@ mod tests {
             7,
             6,
         );
-        assert_eq!(board.eval_all(1), 10);
+        assert_eq!(board.eval_all(1), 80);
     }
 
     #[test]
@@ -607,8 +736,10 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 1, 4, 1, 1, false);
+        let line = board.connect_direction(1, 1, 4, 1, 1, true);
         assert_eq!(line, Line::new(1, 0, 0));
+        let line = board.connect_direction(1, 1, 4, 1, 1, false);
+        assert_eq!(line, Line::new(1, 1, 0));
 
         board = Board::new(
             String::from(
@@ -625,8 +756,10 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 2, 5, 1, 1, false);
+        let line = board.connect_direction(1, 2, 5, 1, 1, true);
         assert_eq!(line, Line::new(1, 0, 2));
+        let line = board.connect_direction(1, 2, 5, 1, 1, false);
+        assert_eq!(line, Line::new(1, 1, 2));
 
         board = Board::new(
             String::from(
@@ -643,7 +776,7 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 2, 5, 1, 1, false);
+        let line = board.connect_direction(1, 2, 5, 1, 1, true);
         assert_eq!(line, Line::new(2, 0, 2));
 
         board = Board::new(
@@ -661,8 +794,8 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 2, 5, 1, 1, true);
-        assert_eq!(line, Line::new(2, 1, 2));
+        let line = board.connect_direction(1, 2, 5, 1, 1, true);
+        assert_eq!(line, Line::new(2, 0, 2));
 
         board = Board::new(
             String::from(
@@ -679,7 +812,7 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 2, 5, 1, 1, false);
+        let line = board.connect_direction(1, 2, 5, 1, 1, true);
         assert_eq!(line, Line::new(2, 0, 0));
 
         board = Board::new(
@@ -697,10 +830,10 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 2, 4, 1, 1, false);
+        let line = board.connect_direction(1, 2, 4, 1, 1, true);
         assert_eq!(line, Line::new(3, 0, 1));
 
-        let line = board.eval_direction(1, 3, 5, 1, 1, false);
+        let line = board.connect_direction(1, 3, 5, 1, 1, true);
         assert_eq!(line, Line::new(3, 0, 1));
 
         board = Board::new(
@@ -718,7 +851,7 @@ mod tests {
             6,
         );
 
-        let line = board.eval_direction(1, 2, 4, 0, 1, false);
+        let line = board.connect_direction(1, 2, 4, 0, 1, true);
         assert_eq!(line, Line::new(1, 0, 0));
     }
 }

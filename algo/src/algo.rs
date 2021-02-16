@@ -3,7 +3,7 @@
 use super::board::*;
 use super::utils;
 use rand::prelude::*;
-use std::cmp;
+use std::cmp::*;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Move {
@@ -24,7 +24,7 @@ impl Move {
     }
 
     pub fn is_threaten(&self) -> bool {
-        self.score >= 2000
+        self.score >= 1000
     }
 }
 
@@ -49,7 +49,7 @@ impl Runner {
     pub fn gen_move(&mut self, board: &mut Board, player: u8, depth: i32) -> (i32, usize, usize) {
         self.eval_node += 1;
         if depth <= 0 {
-            return (board.eval_all(player), 0, 0);
+            return (board.eval_all(player) as i32, 0, 0);
         }
         let mut max_score = std::i32::MIN;
         let mut move_x = 0;
@@ -61,10 +61,10 @@ impl Runner {
                     continue;
                 }
                 board.place(i, j, player);
-                let (score1, _) = board.eval(player);
+                let score1 = board.eval_pos(player, i, j);
                 let (score2, _, _) = self.gen_move(board, utils::opponent(player), depth - 1);
-                if score1 - score2 > max_score {
-                    max_score = score1 - score2;
+                if score1 as i32 - score2 as i32 > max_score {
+                    max_score = score1 as i32 - score2 as i32;
                     move_x = i;
                     move_y = j;
                 }
@@ -85,10 +85,6 @@ impl Runner {
         depth: i32,
     ) -> (i32, usize, usize) {
         self.eval_node += 1;
-        if depth <= 0 {
-            let flag = if player == self.player { 1 } else { -1 };
-            return (flag * board.eval_all(player), 0, 0);
-        }
         let mut max_score = std::i32::MIN / 2;
         let mut move_x = 0;
         let mut move_y = 0;
@@ -115,15 +111,32 @@ impl Runner {
 
     pub fn gen_ordered_moves(&mut self, board: &mut Board, player: u8) -> Vec<Move> {
         let mut moves = vec![];
+        let mut row_min = board.height;
+        let mut row_max = 0;
+        let mut col_min = board.width;
+        let mut col_max = 0;
+
         for i in 0..board.height {
             for j in 0..board.width {
+                let n = board.get(i as i32, j as i32);
+                if n.is_some() && n != Some(0) {
+                    row_min = min(row_min, i);
+                    row_max = max(row_max, i);
+                    col_min = min(col_min, j);
+                    col_max = max(col_max, j);
+                }
+            }
+        }
+
+        for i in min(row_min as i32 - 1, 0) as usize..min(board.height, row_max + 2) {
+            for j in min(col_min as i32 - 1, 0) as usize..min(board.width, col_max + 2) {
                 if board.get(i as i32, j as i32) != Some(0) || board.is_remote_cell(i, j) {
                     continue;
                 }
                 board.place(i, j, player);
-                let (_, max_single) = board.eval(player);
+                let score = board.eval_pos(player, i, j);
                 board.place(i, j, 0);
-                moves.push(Move::new(i, j, max_single, max_single));
+                moves.push(Move::new(i, j, score as i32, score as i32));
             }
         }
         moves.sort_by(|a, b| b.score.cmp(&a.score));
@@ -159,11 +172,6 @@ impl Runner {
             player, depth, alpha, beta
         ); */
         self.eval_node += 1;
-        if depth <= 0 {
-            //  println!("return now: {}", player);
-            let flag = if player == self.player { 1 } else { -1 };
-            return (flag * board.eval_all(player), 0, 0);
-        }
         let mut max_score = std::i32::MIN;
         let mut final_move = Move::new(0, 0, 0, 0);
         let mut cur_alpha = alpha;
@@ -171,6 +179,9 @@ impl Runner {
         let mut block_move = None;
         let mut best_moves: Vec<Move> = vec![];
         let mut candidates = self.gen_ordered_moves(board, player);
+        if candidates.len() == 0 {
+            return (0, 0, 0);
+        }
         if candidates.len() == 1 || candidates[0].score >= dead_score {
             return (candidates[0].score, candidates[0].x, candidates[0].y);
         }
@@ -179,23 +190,23 @@ impl Runner {
         // If there are more than 2 threatening choices for opponent, we must lose the game
         // Anyway, try to block the first threatening choice
         if opponent_candidates.len() >= 1 && opponent_candidates[0].is_threaten() {
-            let size = cmp::min(opponent_candidates.len(), 2);
+            let size = min(opponent_candidates.len(), 2);
             for i in 0..size {
                 let mut mv = opponent_candidates[i];
                 board.place(mv.x, mv.y, player);
-                let (_, max_single) = board.eval(player);
+                let score = board.eval_pos(player, mv.x, mv.y);
                 board.place(mv.x, mv.y, 0);
-                mv.score = max_single;
-                candidates.push(opponent_candidates[i]);
+                mv.score = score as i32;
+                candidates.push(mv);
             }
-            block_move = candidates.last();
+            block_move = opponent_candidates.first();
         }
 
         for i in 0..candidates.len() {
             let mut mv = candidates[i];
             board.place(mv.x, mv.y, player);
             let mut opponent_score = 0;
-            if depth > 1 {
+            if depth >= 1 {
                 let (s, _, _) = self.gen_move_heuristic(
                     board,
                     utils::opponent(player),
@@ -206,7 +217,7 @@ impl Runner {
                 opponent_score = s;
             }
             board.place(mv.x, mv.y, 0);
-            mv.score = -opponent_score;
+            mv.score -= opponent_score;
             if mv.score > max_score {
                 //println!("opponent_score: {}", opponent_score);
                 max_score = mv.score;
@@ -221,18 +232,27 @@ impl Runner {
                 break;
             }
         }
-        /* println!(
-            "+Block move: {:?} \n {:?} depth:{} self.depth:{}",
-            block_move, final_move, depth, self.depth,
-        ); */
+        if depth == self.depth {
+            for i in 0..min(3, opponent_candidates.len()) {
+                println!("opponent_move: {:?}", opponent_candidates[i]);
+            }
+            println!(
+                "+Block move: {:?} \n {:?} depth:{} self.depth:{}",
+                block_move, final_move, depth, self.depth,
+            );
+        }
         if depth == self.depth
             && block_move.is_some()
             && block_move.unwrap().is_threaten()
-            && max_score < 0
+            && max_score < block_move.unwrap().score
         {
             println!("Use block move: {:?}", block_move);
             final_move = *block_move.unwrap();
             max_score = final_move.score;
+            println!(
+                "+Block move: {:?} \n {:?} depth:{} self.depth:{}",
+                block_move, final_move, depth, self.depth,
+            );
         } else if best_moves.len() > 1 {
             //choose a random step
             let mut rng = thread_rng();
@@ -242,6 +262,12 @@ impl Runner {
         let mut prev = String::from("");
         for _ in 0..(self.depth - depth) {
             prev += "---";
+        }
+        if depth == self.depth {
+            println!(
+                "Final move: {:?} depth:{} self.depth:{}, max_score: {}",
+                final_move, depth, self.depth, max_score
+            );
         }
         /* println!(
             "{}Player: {} depth:{} -> Final move: {} {:?}",
@@ -262,6 +288,37 @@ mod tests {
         Board::from(res)
     }
 
+    #[test]
+    fn test_algo() {
+        let mut board = Board::new(
+            String::from(
+                "
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . o . + . . . . .
+        . . . . . . + . o o o + . . .
+        . . . . . + . o + + o . . . .
+        . . . . . . o . o + + . . . .
+        . . . . . . . o + o o . . . .
+        . . . . . . . + o . + . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . .
+        ",
+            ),
+            15,
+            15,
+        );
+
+        let mut runner = Runner::new(2, 4);
+        let (_, row, col) = runner.run_heuristic(&mut board, 2);
+        assert_eq!(row, 4);
+        assert_eq!(col, 7);
+    }
     /* #[allow(unused_assignments)]
     #[test]
     fn test_algo() {
