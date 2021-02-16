@@ -180,3 +180,55 @@ pub fn battle() {
         }
     }
 }
+
+pub fn rev_battle() {
+    let mut board = Board::new_default();
+    let opponent = 2;
+    let me = 1;
+    board.place(7, 7, 1);
+    let mut runner = algo::Runner::new(2, 4);
+    //println!("board: {}", board.to_string());
+    loop {
+        //let args = format!("-s {} -p {}", board.to_string(), opponent);
+        let output = Command::new("gomoku")
+            .arg("-s")
+            .arg(board.to_string())
+            .arg(opponent.to_string())
+            .output()
+            .expect(
+                "failed to execute
+             process",
+            );
+
+        let command_res = String::from_utf8(output.stdout).unwrap();
+        //println!("output: {:?}", command_res);
+        let json: Value = serde_json::from_str(command_res.as_str()).unwrap();
+        let row_str: String = Value::to_string(&json["result"]["move_r"])
+            .chars()
+            .filter(|&x| x != '\"')
+            .collect();
+        let col_str: String = Value::to_string(&json["result"]["move_c"])
+            .chars()
+            .filter(|&x| x != '\"')
+            .collect();
+
+        let row = row_str.parse::<i32>().unwrap();
+        let col = col_str.parse::<i32>().unwrap();
+        println!("+ row: {:?} col: {:?}", row, col);
+        board.place(row as usize, col as usize, opponent);
+        board.print();
+        if let Some(w) = board.any_winner() {
+            println!("winner is: {} !!!!", w);
+            break;
+        }
+
+        let (_, row, col) = runner.run_heuristic(&mut board, me);
+        println!("o row: {:?} col: {:?}", row, col);
+        board.place(row, col, me);
+        board.print();
+        if let Some(w) = board.any_winner() {
+            println!("winner is: {} !!!!", w);
+            break;
+        }
+    }
+}

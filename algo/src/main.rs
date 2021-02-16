@@ -13,6 +13,7 @@ fn main() {
         (@arg input: -i --input +takes_value "Current board of gomoku")
         (@arg verbose: -v --verbose "Print version information verbosely")
         (@arg battle: -b --battle "Run in battle mode")
+        (@arg rev_battle: -r --rev_battle "Run in rev battle mode")
         (@arg self_battle: -k --self_battle "Run in battle self mode")
         (@arg width: -w --width +takes_value "The board width")
         (@arg height: -h --height +takes_value "The board height")
@@ -30,6 +31,10 @@ fn main() {
         return;
     }
 
+    if matches.occurrences_of("rev_battle") > 0 {
+        control::rev_battle();
+        return;
+    }
     if matches.occurrences_of("self_battle") > 0 {
         control::battle_self();
         return;

@@ -2,7 +2,6 @@
 
 use super::board::*;
 use super::utils;
-use rand::prelude::*;
 use std::cmp::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -25,6 +24,10 @@ impl Move {
 
     pub fn is_threaten(&self) -> bool {
         self.score >= 1000
+    }
+
+    pub fn is_dead_move(&self) -> bool {
+        self.score >= 100000
     }
 }
 
@@ -140,7 +143,13 @@ impl Runner {
                 moves.push(Move::new(i, j, score as i32, score as i32));
             }
         }
-        moves.sort_by(|a, b| b.score.cmp(&a.score));
+        moves.sort_by(|a, b| {
+            if a.score != b.score {
+                b.score.cmp(&a.score)
+            } else {
+                b.original_score.cmp(&a.original_score)
+            }
+        });
         /* println!("begin ===============");
         for i in 0..moves.len() {
             println!("player: {} candidates: {:?}", player, moves[i]);
@@ -189,7 +198,7 @@ impl Runner {
         let opponent_candidates = self.gen_ordered_moves(board, utils::opponent(player));
         // If there are more than 2 threatening choices for opponent, we must lose the game
         // Anyway, try to block the first threatening choice
-        if opponent_candidates.len() >= 1 && opponent_candidates[0].is_threaten() {
+        if opponent_candidates.len() >= 1 && opponent_candidates[0].is_dead_move() {
             block_move = opponent_candidates.first();
         }
 
@@ -239,11 +248,7 @@ impl Runner {
                 block_move, final_move, depth, self.depth,
             );
         }
-        if depth == self.depth
-            && block_move.is_some()
-            && block_move.unwrap().is_threaten()
-            && max_score < 0
-        {
+        if depth == self.depth && block_move.is_some() && block_move.unwrap().is_dead_move() {
             println!("Use block move: {:?}", block_move);
             final_move = *block_move.unwrap();
             max_score = final_move.score;
@@ -252,10 +257,9 @@ impl Runner {
                 block_move, final_move, depth, self.depth,
             );
         } else if best_moves.len() > 1 {
-            //choose a random step
-            let mut rng = thread_rng();
-            let idx: usize = rng.gen_range(0, best_moves.len());
-            final_move = best_moves[idx];
+            //choose by original score
+            best_moves.sort_by(|a, b| b.original_score.cmp(&a.original_score));
+            final_move = *(best_moves.first().unwrap());
         }
         let mut prev = String::from("");
         for _ in 0..(self.depth - depth) {
@@ -301,8 +305,8 @@ mod tests {
         . . . . . + . o + + o . . . .
         . . . . . . o . o + + . . . .
         . . . . . . . o + o o . . . .
-        . . . . . . . + o . + . . . .
-        . . . . . . . . . . . . . . .
+        . . . . . . + + o . + . . . .
+        . . . . . . o . . . . . . . .
         . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . .
@@ -314,8 +318,8 @@ mod tests {
 
         let mut runner = Runner::new(2, 4);
         let (_, row, col) = runner.run_heuristic(&mut board, 2);
-        assert_eq!(row, 4);
-        assert_eq!(col, 7);
+        assert_eq!(row, 8);
+        assert_eq!(col, 11);
     }
 
     #[test]
@@ -376,9 +380,105 @@ mod tests {
 
         let mut runner = Runner::new(2, 4);
         let (_, row, col) = runner.run_heuristic(&mut board, 1);
-        assert_eq!(row, 4);
+        assert_eq!(row == 4 || row == 7, true);
         assert_eq!(col, 2);
     }
+
+    #[test]
+    fn test_algo_4() {
+        let mut board = Board::new(
+            String::from(
+                "
+    000000000000000
+    000000000000000
+    000000000000000
+    000000000000000
+    000000002020000
+    000020000102200
+    000212221112100
+    000021111211000
+    000001212111100
+    000000201220020
+    000000000100000
+    000000000020000
+    000000000000000
+    000000000000000
+    000000000000000",
+            ),
+            15,
+            15,
+        );
+        let mut runner = Runner::new(2, 4);
+        let (_, row, col) = runner.run_heuristic(&mut board, 2);
+        assert_eq!(row, 8);
+        assert_eq!(col, 13);
+    }
+
+    #[test]
+    fn test_algo_5() {
+        let mut board = Board::new(
+            String::from(
+                "
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . + o o . . . . . . .
+                . . . . . + + o . . . . . . .
+                . . . . . . o . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . .
+    ",
+            ),
+            15,
+            15,
+        );
+
+        let mut runner = Runner::new(2, 4);
+        let (_, row, col) = runner.run_heuristic(&mut board, 2);
+        //current is 7, 4
+        assert_eq!(row, 9);
+        assert_eq!(col, 7);
+    }
+
+    #[test]
+    fn test_algo_6() {
+        let mut board = Board::new(
+            String::from(
+                "
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . + . . . . . .
+ . . . . . . . . o . . . . . .
+ . . . . . + o o o . . . . . .
+ . . . . . . + + o . o . . . .
+ . . . . . . + . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+ . . . . . . . . . . . . . . .
+    ",
+            ),
+            15,
+            15,
+        );
+
+        let mut runner = Runner::new(2, 4);
+        let (_, row, col) = runner.run_heuristic(&mut board, 2);
+        assert_eq!(row, 5);
+        assert_eq!(col, 7);
+    }
+
     /* #[allow(unused_assignments)]
     #[test]
     fn test_algo() {

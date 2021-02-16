@@ -269,7 +269,7 @@ impl Board {
             let line = &lines[i];
             //println!("i: {} line: {:?}", i, line);
             if line.is_non_refutable() {
-                return 90000;
+                return 5000;
             }
             if line.must_be_blocked() {
                 must_blocked += 1;
@@ -283,8 +283,8 @@ impl Board {
         if must_blocked >= 2 {
             return must_blocked_sum_count * 1000;
         }
-        if two_count >= 3 {
-            score += 40;
+        if two_count >= 2 {
+            score += two_count * 2000;
         }
         return score;
     }
