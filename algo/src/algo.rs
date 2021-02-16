@@ -143,13 +143,7 @@ impl Runner {
                 moves.push(Move::new(i, j, score as i32, score as i32));
             }
         }
-        moves.sort_by(|a, b| {
-            if a.score != b.score {
-                b.score.cmp(&a.score)
-            } else {
-                b.original_score.cmp(&a.original_score)
-            }
-        });
+        moves.sort_by(|a, b| b.score.cmp(&a.score));
         /* println!("begin ===============");
         for i in 0..moves.len() {
             println!("player: {} candidates: {:?}", player, moves[i]);
