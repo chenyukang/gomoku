@@ -15,6 +15,7 @@ fn main() {
         (@arg battle: -b --battle "Run in battle mode")
         (@arg rev_battle: -r --rev_battle "Run in rev battle mode")
         (@arg self_battle: -k --self_battle "Run in battle self mode")
+        (@arg other_self_battle: -o --other_self_battle "Run in other battle self mode")
         (@arg width: -w --width +takes_value "The board width")
         (@arg height: -h --height +takes_value "The board height")
         (@arg depth: -d --depth +takes_value "The search depth for algo")
@@ -37,6 +38,11 @@ fn main() {
     }
     if matches.occurrences_of("self_battle") > 0 {
         control::battle_self();
+        return;
+    }
+
+    if matches.occurrences_of("other_self_battle") > 0 {
+        control::battle_other_self();
         return;
     }
 

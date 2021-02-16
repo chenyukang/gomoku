@@ -64,7 +64,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
     serde_json::to_string(&result).unwrap()
 }
 
-pub fn battle_self() {
+pub fn battle_other_self() {
     let mut board = Board::new_default();
     let opponent = 1;
     let me = 2;
@@ -224,6 +224,34 @@ pub fn rev_battle() {
 
         let (_, row, col) = runner.run_heuristic(&mut board, me);
         println!("o row: {:?} col: {:?}", row, col);
+        board.place(row, col, me);
+        board.print();
+        if let Some(w) = board.any_winner() {
+            println!("winner is: {} !!!!", w);
+            break;
+        }
+    }
+}
+
+pub fn battle_self() {
+    let mut board = Board::new_default();
+    let opponent = 2;
+    let me = 1;
+    board.place(7, 7, 1);
+    let mut runner = algo::Runner::new(2, 4);
+    //println!("board: {}", board.to_string());
+    loop {
+        let (_, row, col) = runner.run_heuristic(&mut board, opponent);
+        println!("o row: {:?} col: {:?}", row, col);
+        board.place(row, col, opponent);
+        board.print();
+        if let Some(w) = board.any_winner() {
+            println!("winner is: {} !!!!", w);
+            break;
+        }
+
+        let (_, row, col) = runner.run_heuristic(&mut board, me);
+        println!("+ row: {:?} col: {:?}", row, col);
         board.place(row, col, me);
         board.print();
         if let Some(w) = board.any_winner() {

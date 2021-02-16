@@ -284,7 +284,7 @@ mod tests {
 
     fn make_empty_board() -> Board {
         let mut res = String::from("");
-        for _ in 0..(7 * 7) {
+        for _ in 0..(15 * 15) {
             res = res + "0";
         }
         Board::from(res)
@@ -479,28 +479,29 @@ mod tests {
         assert_eq!(col, 7);
     }
 
-    /* #[allow(unused_assignments)]
+    #[allow(unused_assignments)]
     #[test]
     fn test_algo() {
         let mut board = make_empty_board();
         let mut winner = 0;
+        board.place(7, 7, 1);
         loop {
-            let mut runner1 = Runner::new(1, 2);
-            let mut runner2 = Runner::new(2, 2);
-            let (_, mv_x1, mv_y1) = runner1.gen_move(&mut board, 1, 2);
-            board.place(mv_x1, mv_y1, 1);
+            let mut runner1 = Runner::new(1, 4);
+            let mut runner2 = Runner::new(2, 4);
+            let (_, mv_x1, mv_y1) = runner1.run_heuristic(&mut board, 2);
+            board.place(mv_x1, mv_y1, 2);
             if let Some(w) = board.any_winner() {
                 println!("winner1: {}", w);
                 winner = w;
                 break;
             }
-            let (_, mv_x2, mv_y2) = runner2.gen_move_negamax(&mut board, 2, 3);
+            let (_, mv_x2, mv_y2) = runner2.run_heuristic(&mut board, 1);
             if let Some(w) = board.any_winner() {
                 println!("winner2: {}", w);
                 winner = w;
                 break;
             }
-            board.place(mv_x2, mv_y2, 2);
+            board.place(mv_x2, mv_y2, 1);
         }
         println!(
             "winner: {}, empty_cells: {}",
@@ -508,5 +509,5 @@ mod tests {
             board.empty_cells_count()
         );
         assert_eq!(winner, 1);
-    } */
+    }
 }
