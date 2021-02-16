@@ -41,8 +41,8 @@ impl Line {
             (v, 0, _) if v >= 5 => 11000,
             (v, 1, _) if v >= 5 => 2000,
             (4, 0, 2) => 10000,
-            (4, 1, 2) => 1000,
-            (4, 0, 1) => 1000,
+            //(4, 1, 2) => 1000,
+            //(4, 0, 1) => 1000,
             (3, 0, 2) => 40,
             (4, 1, 1) => 30,
             (3, 0, 1) => 30,
@@ -289,80 +289,6 @@ impl Board {
         return score;
     }
 
-    // Open direction should consider board width and height
-    fn make_line(&self, player: u8, row: usize, col: usize, dir: usize, allow_hole: i32) -> Line {
-        let mut open_count: u32 = 2;
-        match self.get_prev(row as i32, col as i32, dir) {
-            Some(v) => {
-                if v == player {
-                    return Line::new(0, 0, 0);
-                } else if v != 0 {
-                    open_count -= 1;
-                }
-            }
-            _ => open_count -= 1,
-        }
-        let (count, space_count, tail_count) = self.count_pos(player, row, col, dir, allow_hole);
-        if tail_count <= 0 || (count + tail_count < 5) {
-            open_count -= 1;
-        }
-        let res = Line::new(count, space_count as u32, open_count);
-        res
-    }
-
-    fn count_pos(
-        &self,
-        player: u8,
-        row: usize,
-        col: usize,
-        dir: usize,
-        allow_hole: i32,
-    ) -> (u32, i32, u32) {
-        let dirs = utils::DIRS;
-        let cur = &dirs[dir];
-        let mut i = row as i32;
-        let mut j = col as i32;
-        let mut count = 0;
-        let mut tail_count = 0;
-        let mut space_count = allow_hole;
-        loop {
-            let nxt = self.get(i, j);
-            if nxt == Some(player) || (count > 0 && space_count > 0 && nxt == Some(0)) {
-                count += 1;
-                i += cur[0];
-                j += cur[1];
-                if nxt == Some(0) {
-                    space_count -= 1;
-                }
-            } else if nxt.is_none() {
-                break;
-            } else if nxt == Some(0) {
-                let mut x = i;
-                let mut y = j;
-                loop {
-                    if tail_count >= 4 {
-                        break;
-                    }
-                    let n = self.get(x, y);
-                    if n == Some(0) {
-                        x += cur[0];
-                        y += cur[1];
-                        tail_count += 1;
-                    } else {
-                        break;
-                    }
-                }
-                break;
-            } else {
-                break;
-            }
-        }
-        if allow_hole > 0 && space_count == 0 && self.get_prev(i, j, dir) != Some(player) {
-            count -= 1;
-        }
-        (count, allow_hole - space_count, tail_count)
-    }
-
     pub fn get(&self, row: i32, col: i32) -> Option<u8> {
         if !self.valid_pos(row, col) {
             None
@@ -570,7 +496,7 @@ mod tests {
     #[test]
     fn test_board_score() {
         let mut board = Board::new(String::from("1111020000"), 5, 2);
-        assert_eq!(board.eval_pos(1, 0, 0), 1000);
+        assert_eq!(board.eval_pos(1, 0, 0), 0);
         assert_eq!(board.eval_pos(2, 1, 0), 0);
 
         board = Board::new(String::from("1111111111"), 5, 2);
@@ -717,6 +643,40 @@ mod tests {
             6,
         );
         assert_eq!(board.eval_all(1), 80);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0000000
+        0001000
+        0001000
+        0001200
+        0002000
+        0000000
+        ",
+            ),
+            7,
+            7,
+        );
+        assert_eq!(board.eval_pos(1, 2, 3), 30);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0000000
+        0000000
+        0001100
+        0001200
+        0002000
+        0000000
+        ",
+            ),
+            7,
+            7,
+        );
+        assert_eq!(board.eval_pos(1, 3, 4), 80);
     }
 
     #[test]

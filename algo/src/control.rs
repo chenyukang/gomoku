@@ -139,7 +139,7 @@ pub fn battle() {
     let opponent = 1;
     let me = 2;
     board.place(7, 7, 1);
-    let mut runner = algo::Runner::new(2, 7);
+    let mut runner = algo::Runner::new(2, 4);
     //println!("board: {}", board.to_string());
     loop {
         let (_, row, col) = runner.run_heuristic(&mut board, me);
