@@ -461,11 +461,6 @@
       if (result.cpu_time > 0)
         stats_html += ' (' + formatNumber(result.eval_count * 1000 / result.cpu_time) + '/s)';
 
-      // PM eval count
-      stats_html += '<br>pm = ' + formatNumber(result.pm_count);
-      if (result.cpu_time > 0)
-        stats_html += ' (' + formatNumber(result.pm_count * 1000 / result.cpu_time) + '/s)';
-
       // Build
       stats_html += '<br>build: ' + result.build;
 

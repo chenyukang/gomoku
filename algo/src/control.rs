@@ -1,8 +1,12 @@
 use super::algo;
 use super::board::*;
+use build_timestamp::build_time;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
+use std::time::Instant;
+
+build_time!("%A %Y-%m-%d/%H:%M:%S");
 
 #[derive(Serialize, Deserialize)]
 struct Body {
@@ -13,10 +17,10 @@ struct Body {
     move_r: usize,
     node_count: u32,
     num_threads: i32,
-    pm_count: i32,
     search_depth: i32,
     winning_player: u8,
     score: i32,
+    build: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -31,6 +35,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
     let mut ans_score = 0;
     let mut ans_col = 0;
     let mut ans_row = 0;
+    let start = Instant::now();
     let mut runner = algo::Runner::new(player, 4);
     if let Some(w) = board.any_winner() {
         winner = w;
@@ -45,20 +50,22 @@ pub fn solve_it(input: &str, player: u8) -> String {
         ans_row = row;
         ans_col = col;
     }
+    let duration = start.elapsed();
+    println!("duration: {:?}", duration);
     let result = Message {
         message: String::from("ok"),
         result: Body {
             ai_player: player,
-            cpu_time: String::from("1101"),
+            cpu_time: format!("{:?}", start.elapsed()),
             eval_count: runner.eval_node,
             move_c: ans_col,
             move_r: ans_row,
             node_count: runner.eval_node,
             num_threads: 1,
-            pm_count: 1,
             search_depth: 9,
             winning_player: winner,
             score: ans_score,
+            build: BUILD_TIME.to_string(),
         },
     };
     serde_json::to_string(&result).unwrap()
