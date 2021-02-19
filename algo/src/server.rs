@@ -32,5 +32,5 @@ pub async fn run_server() {
                 .status(StatusCode::BAD_REQUEST)
                 .body(String::from("Failed to decode query param.")),
         });
-    warp::serve(handler).run(([127, 0, 0, 1], 8002)).await
+    warp::serve(handler).run(([0, 0, 0, 0], 8002)).await
 }

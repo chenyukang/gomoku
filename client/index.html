@@ -16,38 +16,17 @@
   </head>
 
   <body style="font-size: 12px; background-color: #fff;">
-    <nav class="navbar navbar-default navbar-static-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href=".">Gomoku</a>
-        </div>
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="https://github.com/chenyukang/gomoku" target="_blank">View on GitHub</a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
 
 
     <div class="container-fluid" style="padding-top:10px;">
       <div class="row">
 
-        <div class="col-md-1">
-        </div>
-
         <!-- Renju -->
-        <div class="col-md-6">
+        <div class="col-md-8">
           <div class="panel panel-default">
             <div class="panel-heading">
               <h3 class="panel-title">
-                Board
+                Gomoku : Five-in-Row
                   <div id='p_ai' class="progress pull-right" style="opacity: 0; margin-top:5px; width: 100px; height: 10px;">
                     <div id='pb_ai' class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
                     </div>
@@ -84,7 +63,7 @@
           <div class="panel panel-default">
             <div class="panel-heading"><h3 class="panel-title">Stats</h3></div>
             <div id="panel_stats" class="panel-body" style="font-family: 'Monaco','Consolas','monospace'; font-size: 10px;">
-              No data available.
+              No Data Available.
             </div>
           </div>
         </div>
@@ -95,7 +74,8 @@
   <script>
     // Script: Game display control, input and message
     // Configurations
-    var api_base_url = 'http://localhost:8002';
+    //var api_base_url = 'http://localhost:8002';
+    var api_base_url = 'http://104.210.32.156:8002';
 
     // Preset graphics
     var svg_lines = [
