@@ -36,7 +36,7 @@ fn main() {
     } else if matches.occurrences_of("other_self_battle") > 0 {
         control::battle_other_self();
     } else if matches.occurrences_of("server") > 0 {
-        let _ = server::run_server();
+        let _ = server::run_server(8002);
     } else {
         if let Some(depth) = matches.value_of("depth") {
             search_depth = depth.parse::<i32>().unwrap();

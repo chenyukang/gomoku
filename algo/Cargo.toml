@@ -5,6 +5,14 @@ authors = ["chenyukang <moorekang@gmail.com>"]
 edition = "2018"
 
 
+[[bin]]
+name = "gomoku"
+path = "src/main.rs"
+
+[[bin]]
+name = "handler"
+path = "src/handler.rs"
+
 [dependencies]
 rand = "0.7.3"
 clap = "3.0.0-beta.2"

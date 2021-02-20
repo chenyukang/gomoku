@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::algo;
 use super::board::*;
 use build_timestamp::build_time;
@@ -5,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
 use std::time::Instant;
+
+
 
 build_time!("%A %Y-%m-%d/%H:%M:%S");
 
