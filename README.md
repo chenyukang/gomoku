@@ -1,6 +1,6 @@
 # gomoku
 
-An Gomoku backend to explore minimax algorithm with alpha-beta tunning.
+A Gomoku backend to explore minimax algorithm with alpha-beta tunning.
 
 # Usage
 
@@ -15,3 +15,5 @@ cd client // open index.html in browser and have fun.
 # Demo 
 
 [http://138.91.229.77/](http://138.91.229.77/)
+
+[demo](./client/assets/gomoku_demo.png)
