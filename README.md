@@ -11,3 +11,6 @@ cargo build --release
 cd client // open index.html in browser and have fun.
 ```
 
+# Demo 
+
+[http://138.91.229.77/](http://138.91.229.77/)
