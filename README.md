@@ -16,4 +16,4 @@ cd client // open index.html in browser and have fun.
 
 [http://138.91.229.77/](http://138.91.229.77/)
 
-[demo](./client/assets/gomoku_demo.png)
+![demo](./client/assets/gomoku_demo.png)
