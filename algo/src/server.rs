@@ -1,4 +1,6 @@
 use super::control;
+use std::net::Ipv4Addr;
+
 use serde::{Deserialize, Serialize};
 use warp::{
     http::{Response, StatusCode},
@@ -12,12 +14,13 @@ struct ReqObject {
 }
 
 #[tokio::main]
-pub async fn run_server() {
+pub async fn run_server(port: u16) {
     let opt_query = warp::query::<ReqObject>()
         .map(Some)
         .or_else(|_| async { Ok::<(Option<ReqObject>,), std::convert::Infallible>((None,)) });
 
     let handler = warp::get()
+        .and(warp::path("api"))
         .and(warp::path("move"))
         .and(opt_query)
         .map(|p: Option<ReqObject>| match p {
@@ -32,5 +35,11 @@ pub async fn run_server() {
                 .status(StatusCode::BAD_REQUEST)
                 .body(String::from("Failed to decode query param.")),
         });
-    warp::serve(handler).run(([127, 0, 0, 1], 8002)).await
+
+    println!("listen to : {} ...", port);
+    warp::serve(handler)
+        .run((Ipv4Addr::UNSPECIFIED, port))
+        .await
+
+    //warp::serve(handler).run(([0, 0, 0, 0], 8002)).await
 }
