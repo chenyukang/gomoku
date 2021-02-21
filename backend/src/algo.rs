@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::env;
 use super::board::*;
 use super::utils::*;
 use std::cmp::*;
@@ -36,15 +37,21 @@ pub struct Runner {
     depth: i32,
     pub gen_move_count: u32,
     pub eval_node: u32,
+    debug: bool
 }
 
 impl Runner {
     pub fn new(player: u8, depth: i32) -> Self {
+        let debug = match env::var("GOMOKU_DEBUG") {
+            Ok(_) => true,
+            _ => false
+        };
         Self {
             player: player,
             depth: depth,
             gen_move_count: 0,
             eval_node: 0,
+            debug: debug
         }
     }
 
@@ -210,7 +217,7 @@ impl Runner {
                 opponent_score = s;
             }
             board.place(mv.x, mv.y, 0);
-            if depth == self.depth {
+            if depth == self.depth && self.debug {
                 println!("move: {:?} => oppo_score: {}", mv, opponent_score);
             }
             mv.score -= opponent_score;
@@ -229,7 +236,7 @@ impl Runner {
                 break;
             }
         }
-        if depth == self.depth {
+        if depth == self.depth && self.debug {
             for i in 0..candidates.len() {
                 println!("possible move: {:?}", candidates[i]);
             }
@@ -311,6 +318,8 @@ mod tests {
 
         let mut runner = Runner::new(2, 4);
         let (_, row, col) = runner.run_heuristic(&mut board, 2);
+        board.place(row, col, 2);
+        board.print();
         assert_eq!(row, 8);
         assert_eq!(col, 11);
     }
@@ -342,7 +351,9 @@ mod tests {
         );
 
         let mut runner = Runner::new(2, 4);
-        let (score, _, _) = runner.run_heuristic(&mut board, 1);
+        let (score, row, col) = runner.run_heuristic(&mut board, 1);
+        board.place(row, col, 2);
+        board.print();
         assert_eq!(score, 0); //FIXME
     }
 
@@ -474,13 +485,19 @@ mod tests {
 
     #[allow(unused_assignments)]
     #[test]
-    fn test_algo() {
+    fn test_algo_battle_self() {
         let mut board = make_empty_board();
         let mut winner = 0;
         board.place(7, 7, 1);
         loop {
             let mut runner1 = Runner::new(1, 4);
             let mut runner2 = Runner::new(2, 4);
+
+            if board.empty_cells_count() == 0 { 
+                break;
+            }
+
+            //println!("left: {}", board.empty_cells_count());
             let (_, mv_x1, mv_y1) = runner1.run_heuristic(&mut board, 2);
             board.place(mv_x1, mv_y1, 2);
             if let Some(w) = board.any_winner() {
@@ -501,6 +518,7 @@ mod tests {
             winner,
             board.empty_cells_count()
         );
-        assert_eq!(winner, 1);
+        assert_eq!(winner, 0);
+        assert_eq!(board.empty_cells_count(), 0);
     }
 }

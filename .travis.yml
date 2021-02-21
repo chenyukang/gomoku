@@ -3,5 +3,5 @@ rust:
   - stable
 before_script: cd backend
 script:
-  - cargo build --verbose
-  - cargo test --verbose
+  - cargo build --release --verbose
+  - cargo test --release --verbose

@@ -51,7 +51,7 @@ impl Line {
     }
 
     fn single_score(&self) -> u32 {
-        self.count * 2 + self.open_count - self.space_count
+        self.count * 2 + ((self.open_count as f32) * 1.5) as u32 - self.space_count
     }
 
     pub fn cmp(&self, other: &Line) -> Ordering {
@@ -278,7 +278,7 @@ impl Board {
                 must_blocked += 1;
                 must_blocked_sum_count += line.count;
             }
-            if line.count == 0 && line.open_count >= 1 {
+            if line.count == 2 && line.open_count >= 2 {
                 two_count += 1;
             }
             score += line.score();
@@ -286,8 +286,9 @@ impl Board {
         if must_blocked >= 2 {
             return must_blocked_sum_count * 1000;
         }
-        if two_count >= 2 {
-            score += two_count * 2000;
+        if two_count >= 3 {
+            //println!("two_count now: {}", two_count);
+            score += two_count * 40;
         }
         return score;
     }
@@ -339,7 +340,7 @@ impl Board {
         let mut count = 0;
         for i in 0..self.height {
             for j in 0..self.width {
-                if self.cells[i][j] != 0 {
+                if self.cells[i][j] == 0 {
                     count += 1;
                 }
             }
@@ -415,7 +416,7 @@ mod tests {
         assert_eq!(line1.cmp(&line2), Ordering::Less);
 
         let line3 = Line::new(3, 1, 2);
-        assert_eq!(line1.cmp(&line3), Ordering::Equal);
+        assert_eq!(line1.cmp(&line3), Ordering::Less);
 
         let line4 = Line::new(3, 0, 1);
         assert_eq!(line1.cmp(&line4), Ordering::Equal);
@@ -690,6 +691,24 @@ mod tests {
             7,
         );
         assert_eq!(board.eval_pos(1, 3, 4), 80);
+
+        board = Board::new(
+            String::from(
+                "
+        0000000
+        0001000
+        0001000
+        0001000
+        0001000
+        0002000
+        0002000
+        ",
+            ),
+            7,
+            7,
+        );
+        assert_eq!(board.eval_pos(1, 1, 3), 0);
+        
     }
 
     #[test]
