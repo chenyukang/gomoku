@@ -1,7 +1,7 @@
  language: rust
 rust:
   - stable
-before_script: cd gomoku/backend
+before_script: cd backend
 script:
   - cargo build --verbose
   - cargo test --verbose
