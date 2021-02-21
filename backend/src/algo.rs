@@ -17,7 +17,7 @@ impl Move {
         Self {
             x: x,
             y: y,
-            score: score,
+            score: score, 
             original_score: original_score,
         }
     }

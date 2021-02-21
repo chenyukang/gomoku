@@ -42,7 +42,6 @@ fn main() {
             Ok(val) => val.parse().expect("Custom Handler port is not a number!"),
             Err(_) => 3000,
         };
-    
         server::run_server(port);
     } else {
         if let Some(depth) = matches.value_of("depth") {

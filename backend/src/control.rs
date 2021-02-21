@@ -76,10 +76,8 @@ pub fn battle_other_self() {
     let opponent = 1;
     let me = 2;
     board.place(7, 7, 1);
-    //let mut runner = algo::Runner::new(2, 7);
-    //println!("board: {}", board.to_string());
+
     loop {
-        //let args = format!("-s {} -p {}", board.to_string(), opponent);
         let output = Command::new("gomoku")
             .arg("-s")
             .arg(board.to_string())
@@ -118,7 +116,7 @@ pub fn battle_other_self() {
             .output()
             .expect("failed to execute process");
         let command_res = String::from_utf8(output.stdout).unwrap();
-        //println!("output: {:?}", command_res);
+
         let json: Value = serde_json::from_str(command_res.as_str()).unwrap();
         let row_str: String = Value::to_string(&json["result"]["move_r"])
             .chars()
@@ -194,7 +192,6 @@ pub fn rev_battle() {
     let me = 1;
     board.place(7, 7, 1);
     let mut runner = algo::Runner::new(2, 4);
-    //println!("board: {}", board.to_string());
     loop {
         //let args = format!("-s {} -p {}", board.to_string(), opponent);
         let output = Command::new("gomoku")

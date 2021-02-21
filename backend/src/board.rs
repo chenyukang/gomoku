@@ -41,8 +41,6 @@ impl Line {
             (v, 0, _) if v >= 5 => 11000,
             (v, 1, _) if v >= 5 => 2000,
             (4, 0, 2) => 10000,
-            //(4, 1, 2) => 1000,
-            //(4, 0, 1) => 1000,
             (3, 0, 2) => 40,
             (4, 1, 1) => 30,
             (3, 0, 1) => 30,
@@ -74,6 +72,8 @@ pub struct Board {
     pub width: usize,
     pub height: usize,
     cells: Vec<Vec<u8>>,
+    at_x: i32,
+    at_y: i32
 }
 
 impl Board {
@@ -109,6 +109,8 @@ impl Board {
             width: width,
             height: height,
             cells: rows.chunks(width).map(|x| x.to_vec()).collect(),
+            at_x: -1, 
+            at_y: -1
         }
     }
 
@@ -309,7 +311,14 @@ impl Board {
     }
 
     pub fn place(&mut self, row: usize, col: usize, player: u8) {
-        self.cells[row][col] = player
+        self.cells[row][col] = player;
+        if player != 0 {
+            self.at_x = row as i32;
+            self.at_y = col as i32;
+        } else { 
+            self.at_x = -1;
+            self.at_y = -1;
+        }
     }
 
     pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
@@ -348,13 +357,16 @@ impl Board {
     }
 
     pub fn print(&self) {
+        use yansi::Paint;
+
         for i in 0..self.height {
             let mut res = "".to_string();
             for j in 0..self.width {
+                let last_placed = i == self.at_x as usize && j == self.at_y as usize;
                 let cell = match self.cells[i][j] {
-                    1 => " o",
-                    2 => " +",
-                    _ => " .",
+                    1 => Paint::green(if last_placed { " O" } else { " o"}),
+                    2 => Paint::red(if last_placed { " X" } else { " +" }) ,
+                    _ => Paint::white(" ."),
                 };
                 res += format!("{}", cell).as_str();
             }
