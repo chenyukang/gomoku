@@ -1,6 +1,6 @@
 # gomoku
 
-[![Build Status](https://travis-ci.com/chenyukang/gomoku.svg?branch=master)](https://travis-ci.com/chenyukang/gomoku)
+[![Build Status](https://travis-ci.com/chenyukang/gomoku.svg?branch=main)](https://travis-ci.com/chenyukang/gomoku)
 
 A Gomoku backend to explore minimax algorithm with alpha-beta tunning.
 
