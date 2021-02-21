@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use super::board::*;
-use super::utils;
+use super::utils::*;
 use std::cmp::*;
 
 #[derive(Debug, Copy, Clone)]
@@ -65,7 +65,7 @@ impl Runner {
                 }
                 board.place(i, j, player);
                 let score1 = board.eval_pos(player, i, j);
-                let (score2, _, _) = self.gen_move(board, utils::opponent(player), depth - 1);
+                let (score2, _, _) = self.gen_move(board, cfg::opponent(player), depth - 1);
                 if score1 as i32 - score2 as i32 > max_score {
                     max_score = score1 as i32 - score2 as i32;
                     move_x = i;
@@ -98,8 +98,7 @@ impl Runner {
                     continue;
                 }
                 board.place(i, j, player);
-                let (score, _, _) =
-                    self.gen_move_negamax(board, utils::opponent(player), depth - 1);
+                let (score, _, _) = self.gen_move_negamax(board, cfg::opponent(player), depth - 1);
                 let score = -score;
                 if score > max_score {
                     max_score = score;
@@ -189,7 +188,7 @@ impl Runner {
             return (candidates[0].score, candidates[0].x, candidates[0].y);
         }
 
-        let opponent_candidates = self.gen_ordered_moves(board, utils::opponent(player));
+        let opponent_candidates = self.gen_ordered_moves(board, cfg::opponent(player));
         // If there are more than 2 threatening choices for opponent, we must lose the game
         // Anyway, try to block the first threatening choice
         if opponent_candidates.len() >= 1 && opponent_candidates[0].is_dead_move() {
@@ -203,7 +202,7 @@ impl Runner {
             if depth > 1 {
                 let (s, _, _) = self.gen_move_heuristic(
                     board,
-                    utils::opponent(player),
+                    cfg::opponent(player),
                     depth - 1,
                     -beta,
                     -cur_alpha + mv.score,

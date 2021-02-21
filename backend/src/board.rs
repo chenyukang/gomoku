@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use super::utils;
+use super::utils::*;
 use std::cmp::Ordering;
 
 #[derive(Debug)]
@@ -76,6 +76,18 @@ pub struct Board {
     cells: Vec<Vec<u8>>,
 }
 
+impl From<String> for Board {
+    fn from(input: String) -> Self {
+        let len = input.len();
+        let width = (len as f64).sqrt() as usize;
+        let height = width;
+        if width * height != len {
+            panic!("Invalid input string size");
+        }
+        Board::new(input, width, height)
+    }
+}
+
 impl Board {
     pub fn new(input: String, width: usize, height: usize) -> Self {
         let rows: Vec<u8> = input
@@ -111,24 +123,13 @@ impl Board {
             cells: rows.chunks(width).map(|x| x.to_vec()).collect(),
         }
     }
-
-    pub fn from(input: String) -> Self {
-        let len = input.len();
-        let width = (len as f64).sqrt() as usize;
-        let height = width;
-        if width * height != len {
-            panic!("Invalid input string size");
-        }
-        Board::new(input, width, height)
-    }
-
     pub fn any_winner(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
                 for p in 1..3 {
                     if self.get(i as i32, j as i32) == Some(p) {
                         for k in 0..4 {
-                            let d = utils::DIRS[k];
+                            let d = cfg::DIRS[k];
                             let line = self.connect_direction(p, i, j, d[0], d[1], true);
                             if line.count >= 5 {
                                 return Some(p);
@@ -225,8 +226,8 @@ impl Board {
     }
 
     fn connect_all_directions(&self, player: u8, row: usize, col: usize) -> Vec<Line> {
-        let dirs = utils::DIRS;
-        let revs = utils::REV_DIRS;
+        let dirs = cfg::DIRS;
+        let revs = cfg::REV_DIRS;
         let mut res = vec![];
         for i in 0..dirs.len() {
             let d = &dirs[i];
@@ -298,7 +299,7 @@ impl Board {
     }
 
     fn get_prev(&self, row: i32, col: i32, dir: usize) -> Option<u8> {
-        let revs = utils::REV_DIRS;
+        let revs = cfg::REV_DIRS;
         let p_row = row as i32 + revs[dir][0];
         let p_col = col as i32 + revs[dir][1];
         self.get(p_row, p_col)
@@ -313,7 +314,7 @@ impl Board {
     }
 
     pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
-        let dirs = utils::ALL_DIRS;
+        let dirs = cfg::ALL_DIRS;
         for d in 1..3 {
             for k in 0..8 {
                 let p = self.get(row as i32 + dirs[k][0] * d, col as i32 + dirs[k][1] * d);
