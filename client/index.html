@@ -398,9 +398,11 @@
       if (result.winning_player == '1') {
         updateStatusPanel('Black wins!', playerColors(), '#448aff');
         gameActive(false, true);
+        alert("Black Win!");
       } else if (result.winning_player == '2') {
         updateStatusPanel('White wins!', playerColors(), '#448aff');
         gameActive(false, true);
+        alert("White Win!");
       } else {
         gameActive(true);
         updateStatusPanel('Connected', playerColors());
