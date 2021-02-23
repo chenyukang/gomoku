@@ -75,7 +75,11 @@
     // Script: Game display control, input and message
     // Configurations
     var api_base_url = 'http://localhost:3000';
-    //var api_base_url = 'https://gomoku-app.azurewebsites.net/api';
+    if (window.location.href.toString().indexOf("azurestaticapps.net") != -1) {
+      api_base_url = 'https://gomoku-app.azurewebsites.net/api';
+    } else {
+      console.log("will use local host ....")
+    }
 
     // Preset graphics
     var svg_lines = [
