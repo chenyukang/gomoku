@@ -200,8 +200,7 @@ pub fn rev_battle() {
             .arg(opponent.to_string())
             .output()
             .expect(
-                "failed to execute
-             process",
+                "failed to execute process",
             );
 
         let command_res = String::from_utf8(output.stdout).unwrap();
