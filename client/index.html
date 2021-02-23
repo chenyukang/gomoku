@@ -76,7 +76,7 @@
     // Configurations
     var api_base_url = 'http://localhost:3000';
     if (window.location.href.toString().indexOf("azurestaticapps.net") != -1) {
-      api_base_url = 'https://gomoku-app.azurewebsites.net/api';
+      api_base_url = 'https://gomoku-app.azurewebsites.net';
     } else {
       console.log("will use local host ....")
     }
@@ -369,7 +369,7 @@
 
     // Sends status to backend
     function sendGameStatus(board, ai_player) {
-      var req_url = api_base_url + '/move?s=' + board + '&p=' + ai_player;
+      var req_url = api_base_url + '/api/move?s=' + board + '&p=' + ai_player;
 
       $.get(req_url, function(data) {
         processResponse(data);
