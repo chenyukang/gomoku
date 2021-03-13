@@ -1,0 +1,15 @@
+{
+  "name": "algo",
+  "collaborators": [
+    "chenyukang <moorekang@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "gomoku_wasm_bg.wasm",
+    "gomoku_wasm.js",
+    "gomoku_wasm.d.ts"
+  ],
+  "module": "gomoku_wasm.js",
+  "types": "gomoku_wasm.d.ts",
+  "sideEffects": false
+}
