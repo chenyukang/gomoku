@@ -6,12 +6,21 @@ A Gomoku backend to explore minimax algorithm with alpha-beta tunning.
 
 # Usage
 
+### Build server backend
 ```sh
-cd algo
-cargo build --release
+cd backend
+cargo build --release --features "server"
 ./target/release/gomoku -s  //start server listen to http://localhost:3000
 
-cd client // open index.html in browser and have fun.
+// open client/index.html in browser and have fun.
+```
+
+### Build WASM backend
+
+cargo install wasm-pack
+```sh
+./wasm.sh
+// open wasm-client/index.html in brwoser and have fun
 ```
 
 # [Demo](https://lemon-hill-0c2cac210.azurestaticapps.net/)
