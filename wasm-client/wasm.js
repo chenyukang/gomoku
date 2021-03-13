@@ -4,13 +4,12 @@
 // the named exports that are individual wrapper functions
 // to facilitate handle data passing between JS and Wasm.
 import wasmInit, {
-    add_str,
     gomoku_solve,
-  } from "./pkg/wasm_demo.js";
+  } from "./pkg/gomoku_wasm.js";
   
-  wasmInit("./pkg/wasm_demo_bg.wasm");
+  wasmInit("./pkg/gomoku_wasm_bg.wasm");
 
-  export function solve_now(input, player) {
+  export function solve_with_api(input, player) {
     // Instantiate our wasm module
 
     // Call our exported function

@@ -5,6 +5,7 @@ use build_timestamp::build_time;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
+#[cfg(feature = "server")]
 use std::time::Instant;
 
 build_time!("%A %Y-%m-%d/%H:%M:%S");
@@ -36,7 +37,11 @@ pub fn solve_it(input: &str, player: u8) -> String {
     let mut ans_score = 0;
     let mut ans_col = 0;
     let mut ans_row = 0;
-    let start = Instant::now();
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "server")] {
+          let start = Instant::now();
+        }
+    };
     let mut runner = algo::Runner::new(player, 4);
     if let Some(w) = board.any_winner() {
         winner = w;
@@ -51,13 +56,19 @@ pub fn solve_it(input: &str, player: u8) -> String {
         ans_row = row;
         ans_col = col;
     }
-    let duration = start.elapsed();
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "server")] {
+          let duration = start.elapsed();
+        } else {
+          let duration = 0;
+        }
+    };
     println!("duration: {:?}", duration);
     let result = Message {
         message: String::from("ok"),
         result: Body {
             ai_player: player,
-            cpu_time: format!("{:?}", start.elapsed()),
+            cpu_time: format!("{:?}", duration),
             eval_count: runner.eval_node,
             move_c: ans_col,
             move_r: ans_row,

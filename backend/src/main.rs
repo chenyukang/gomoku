@@ -1,8 +1,10 @@
 use clap::clap_app;
 use std::env;
+
 mod algo;
 mod board;
 mod control;
+#[cfg(feature = "server")]
 mod server;
 mod utils;
 
@@ -38,11 +40,17 @@ fn main() {
         control::battle_other_self();
     } else if matches.occurrences_of("server") > 0 {
         let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
-        let port: u16 = match env::var(port_key) {
+        let _port: u16 = match env::var(port_key) {
             Ok(val) => val.parse().expect("Custom Handler port is not a number!"),
             Err(_) => 3000,
         };
-        server::run_server(port);
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "server")] {
+              server::run_server(_port);
+            } else {
+                panic!("no build with feature : server")
+            }
+        };
     } else {
         if let Some(depth) = matches.value_of("depth") {
             search_depth = depth.parse::<i32>().unwrap();
