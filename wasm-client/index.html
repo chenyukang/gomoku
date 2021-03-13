@@ -372,8 +372,8 @@
 
     // Sends status to backend
     function sendGameStatus(board, ai_player) {
-      console.log(typeof(board));
-      console.log(typeof(ai_player));
+      //console.log(typeof(board));
+      //console.log(typeof(ai_player));
       data = gomoku_solve(board, ai_player);
       processResponse(data);
       /* var req_url = api_base_url + '/api/move?s=' + board + '&p=' + ai_player;
