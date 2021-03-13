@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::algo;
 use super::board::*;
 use build_timestamp::build_time;
@@ -199,9 +200,7 @@ pub fn rev_battle() {
             .arg(board.to_string())
             .arg(opponent.to_string())
             .output()
-            .expect(
-                "failed to execute process",
-            );
+            .expect("failed to execute process");
 
         let command_res = String::from_utf8(output.stdout).unwrap();
         //println!("output: {:?}", command_res);

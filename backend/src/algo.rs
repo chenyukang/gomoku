@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
-use std::env;
 use super::board::*;
 use super::utils::*;
 use std::cmp::*;
+use std::env;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Move {
@@ -18,7 +18,7 @@ impl Move {
         Self {
             x: x,
             y: y,
-            score: score, 
+            score: score,
             original_score: original_score,
         }
     }
@@ -37,21 +37,21 @@ pub struct Runner {
     depth: i32,
     pub gen_move_count: u32,
     pub eval_node: u32,
-    debug: bool
+    debug: bool,
 }
 
 impl Runner {
     pub fn new(player: u8, depth: i32) -> Self {
         let debug = match env::var("GOMOKU_DEBUG") {
             Ok(_) => true,
-            _ => false
+            _ => false,
         };
         Self {
             player: player,
             depth: depth,
             gen_move_count: 0,
             eval_node: 0,
-            debug: debug
+            debug: debug,
         }
     }
 
@@ -493,7 +493,7 @@ mod tests {
             let mut runner1 = Runner::new(1, 4);
             let mut runner2 = Runner::new(2, 4);
 
-            if board.empty_cells_count() == 0 { 
+            if board.empty_cells_count() == 0 {
                 break;
             }
 
