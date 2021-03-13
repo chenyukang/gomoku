@@ -1,5 +1,5 @@
 [package]
-name = "algo"
+name = "gomoku"
 version = "0.1.0"
 authors = ["chenyukang <moorekang@gmail.com>"]
 edition = "2018"
