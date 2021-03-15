@@ -2,7 +2,8 @@
 
 [![Build Status](https://travis-ci.com/chenyukang/gomoku.svg?branch=main)](https://travis-ci.com/chenyukang/gomoku)
 
-A Gomoku backend to explore minimax algorithm with alpha-beta tunning.
+A Gomoku Web Applition to explore minimax algorithm with alpha-beta tunning,
+Azure Function, Rust and WebAssembly.
 
 # Usage
 
