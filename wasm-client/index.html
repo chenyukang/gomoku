@@ -123,10 +123,11 @@
   var move_log;
   var undo_remaining;
 
+  var wasmWorker = new Worker('worker.js', { type: "module" } );
 
-  //var solve_it = window.gomoku_solve;
-  //solve_it("000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-  //  1);
+  wasmWorker.onmessage = function(result) {
+    processResponse(result.data);
+  }
 
   // Randomly select first player
   human_player = 1;
@@ -371,7 +372,7 @@
     addPiece(r, c, human_player);
 
     // Send game status
-    sendGameStatus(current_board, ai_player);
+    wasmWorker.postMessage([current_board, ai_player]);
   }
 
   // Generates an HTML string of player colors
@@ -385,17 +386,13 @@
 
   // Sends status to backend
   function sendGameStatus(board, ai_player) {
-    //console.log(typeof(board));
-    //console.log(typeof(ai_player));
-    data = gomoku_solve(board, ai_player);
-    processResponse(data);
-    /* var req_url = api_base_url + '/api/move?s=' + board + '&p=' + ai_player;
+    var req_url = api_base_url + '/api/move?s=' + board + '&p=' + ai_player;
 
     $.get(req_url, function(data) {
       processResponse(data);
     }).fail(function() {
       updateStatusPanel('Error', 'Unable to request data from server.<br>', '#f44336');
-    }); */
+    });
   }
 
   // Process response
