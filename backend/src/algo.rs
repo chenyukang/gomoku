@@ -5,33 +5,6 @@ use super::utils::*;
 use std::cmp::*;
 use std::env;
 
-#[derive(Debug, Copy, Clone)]
-pub struct Move {
-    x: usize,
-    y: usize,
-    score: i32,
-    original_score: i32,
-}
-
-impl Move {
-    pub fn new(x: usize, y: usize, score: i32, original_score: i32) -> Self {
-        Self {
-            x: x,
-            y: y,
-            score: score,
-            original_score: original_score,
-        }
-    }
-
-    pub fn is_threaten(&self) -> bool {
-        self.score >= 1000
-    }
-
-    pub fn is_dead_move(&self) -> bool {
-        self.score >= 100000
-    }
-}
-
 pub struct Runner {
     player: u8,
     depth: i32,
@@ -118,46 +91,6 @@ impl Runner {
         (max_score, move_x, move_y)
     }
 
-    pub fn gen_ordered_moves(&mut self, board: &mut Board, player: u8) -> Vec<Move> {
-        let mut moves = vec![];
-        let mut row_min = board.height;
-        let mut row_max = 0;
-        let mut col_min = board.width;
-        let mut col_max = 0;
-
-        for i in 0..board.height {
-            for j in 0..board.width {
-                let n = board.get(i as i32, j as i32);
-                if n.is_some() && n != Some(0) {
-                    row_min = min(row_min, i);
-                    row_max = max(row_max, i);
-                    col_min = min(col_min, j);
-                    col_max = max(col_max, j);
-                }
-            }
-        }
-
-        for i in max(row_min as i32 - 1, 0) as usize..min(board.height, row_max + 2) {
-            for j in max(col_min as i32 - 1, 0) as usize..min(board.width, col_max + 2) {
-                if board.get(i as i32, j as i32) != Some(0) || board.is_remote_cell(i, j) {
-                    continue;
-                }
-                board.place(i, j, player);
-                let score = board.eval_pos(player, i, j);
-                //println!("{} {} => {}", i, j, score);
-                board.place(i, j, 0);
-                moves.push(Move::new(i, j, score as i32, score as i32));
-            }
-        }
-        moves.sort_by(|a, b| b.score.cmp(&a.score));
-        /* println!("begin ===============");
-        for i in 0..moves.len() {
-            println!("player: {} candidates: {:?}", player, moves[i]);
-        }
-        println!("end ====================="); */
-        moves
-    }
-
     pub fn run_heuristic(&mut self, board: &mut Board, player: u8) -> (i32, usize, usize) {
         self.gen_move_heuristic(
             board,
@@ -185,7 +118,7 @@ impl Runner {
         let dead_score = 100000;
         let mut block_move = None;
         let mut best_moves: Vec<Move> = vec![];
-        let mut candidates = self.gen_ordered_moves(board, player);
+        let mut candidates = board.gen_ordered_moves(player);
         if depth == self.depth {
             println!("len: {}", candidates.len());
         }
@@ -196,7 +129,7 @@ impl Runner {
             return (candidates[0].score, candidates[0].x, candidates[0].y);
         }
 
-        let opponent_candidates = self.gen_ordered_moves(board, cfg::opponent(player));
+        let opponent_candidates = board.gen_ordered_moves(cfg::opponent(player));
         // If there are more than 2 threatening choices for opponent, we must lose the game
         // Anyway, try to block the first threatening choice
         if opponent_candidates.len() >= 1 && opponent_candidates[0].is_dead_move() {

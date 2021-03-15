@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use super::utils::*;
 use std::cmp::Ordering;
+use std::cmp::*;
 
 #[derive(Debug)]
 struct Line {
@@ -67,13 +68,13 @@ impl PartialEq for Line {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Board {
     pub width: usize,
     pub height: usize,
     cells: Vec<Vec<u8>>,
     at_x: i32,
-    at_y: i32
+    at_y: i32,
 }
 
 impl From<String> for Board {
@@ -121,8 +122,8 @@ impl Board {
             width: width,
             height: height,
             cells: rows.chunks(width).map(|x| x.to_vec()).collect(),
-            at_x: -1, 
-            at_y: -1
+            at_x: -1,
+            at_y: -1,
         }
     }
     pub fn any_winner(&self) -> Option<u8> {
@@ -317,7 +318,7 @@ impl Board {
         if player != 0 {
             self.at_x = row as i32;
             self.at_y = col as i32;
-        } else { 
+        } else {
             self.at_x = -1;
             self.at_y = -1;
         }
@@ -358,6 +359,76 @@ impl Board {
         res
     }
 
+    pub fn gen_ordered_moves(&mut self, player: u8) -> Vec<Move> {
+        let mut moves = vec![];
+        let mut row_min = self.height;
+        let mut row_max = 0;
+        let mut col_min = self.width;
+        let mut col_max = 0;
+
+        for i in 0..self.height {
+            for j in 0..self.width {
+                let n = self.get(i as i32, j as i32);
+                if n.is_some() && n != Some(0) {
+                    row_min = min(row_min, i);
+                    row_max = max(row_max, i);
+                    col_min = min(col_min, j);
+                    col_max = max(col_max, j);
+                }
+            }
+        }
+
+        for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
+            for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
+                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
+                    continue;
+                }
+                self.place(i, j, player);
+                let score = self.eval_pos(player, i, j);
+                //println!("{} {} => {}", i, j, score);
+                self.place(i, j, 0);
+                moves.push(Move::new(i, j, score as i32, score as i32));
+            }
+        }
+        moves.sort_by(|a, b| b.score.cmp(&a.score));
+        /* println!("begin ===============");
+        for i in 0..moves.len() {
+            println!("player: {} candidates: {:?}", player, moves[i]);
+        }
+        println!("end ====================="); */
+        moves
+    }
+
+    pub fn gen_possible_moves(&self) -> Vec<Move> {
+        let mut moves = vec![];
+        let mut row_min = self.height;
+        let mut row_max = 0;
+        let mut col_min = self.width;
+        let mut col_max = 0;
+
+        for i in 0..self.height {
+            for j in 0..self.width {
+                let n = self.get(i as i32, j as i32);
+                if n.is_some() && n != Some(0) {
+                    row_min = min(row_min, i);
+                    row_max = max(row_max, i);
+                    col_min = min(col_min, j);
+                    col_max = max(col_max, j);
+                }
+            }
+        }
+
+        for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
+            for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
+                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
+                    continue;
+                }
+                moves.push(Move::new(i, j, 0, 0));
+            }
+        }
+        moves
+    }
+
     pub fn print(&self) {
         use yansi::Paint;
 
@@ -366,8 +437,8 @@ impl Board {
             for j in 0..self.width {
                 let last_placed = i == self.at_x as usize && j == self.at_y as usize;
                 let cell = match self.cells[i][j] {
-                    1 => Paint::green(if last_placed { " O" } else { " o"}),
-                    2 => Paint::red(if last_placed { " X" } else { " +" }) ,
+                    1 => Paint::green(if last_placed { " O" } else { " o" }),
+                    2 => Paint::red(if last_placed { " X" } else { " +" }),
                     _ => Paint::white(" ."),
                 };
                 res += format!("{}", cell).as_str();
@@ -382,6 +453,33 @@ impl Board {
             res = res + "0";
         }
         Board::from(res)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Move {
+    pub x: usize,
+    pub y: usize,
+    pub score: i32,
+    pub original_score: i32,
+}
+
+impl Move {
+    pub fn new(x: usize, y: usize, score: i32, original_score: i32) -> Self {
+        Self {
+            x: x,
+            y: y,
+            score: score,
+            original_score: original_score,
+        }
+    }
+
+    pub fn is_threaten(&self) -> bool {
+        self.score >= 1000
+    }
+
+    pub fn is_dead_move(&self) -> bool {
+        self.score >= 100000
     }
 }
 
@@ -708,7 +806,6 @@ mod tests {
             7,
         );
         assert_eq!(board.eval_pos(1, 1, 3), 0);
-        
     }
 
     #[test]

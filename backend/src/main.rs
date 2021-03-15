@@ -4,6 +4,7 @@ use std::env;
 mod algo;
 mod board;
 mod control;
+mod monte;
 #[cfg(feature = "server")]
 mod server;
 mod utils;
