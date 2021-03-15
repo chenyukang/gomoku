@@ -387,7 +387,6 @@
   // Sends status to backend
   function sendGameStatus(board, ai_player) {
     var req_url = api_base_url + '/api/move?s=' + board + '&p=' + ai_player;
-
     $.get(req_url, function(data) {
       processResponse(data);
     }).fail(function() {
@@ -415,11 +414,11 @@
     if (result.winning_player == '1') {
       updateStatusPanel('Black wins!', playerColors(), '#448aff');
       gameActive(false, true);
-      alert("Black Win!");
+      //alert("Black Win!");
     } else if (result.winning_player == '2') {
       updateStatusPanel('White wins!', playerColors(), '#448aff');
       gameActive(false, true);
-      alert("White Win!");
+      //alert("White Win!");
     } else {
       gameActive(true);
       updateStatusPanel('Connected', playerColors());
