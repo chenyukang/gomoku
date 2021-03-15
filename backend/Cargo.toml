@@ -17,6 +17,7 @@ name = "gomoku_wasm"
 path = "src/lib.rs"
 
 [dependencies]
+generational-arena = "0.2"
 cfg-if = "0.1"
 wasm-bindgen = "0.2"
 yansi = "0.5.0"
