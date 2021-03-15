@@ -168,6 +168,7 @@ impl Runner {
         )
     }
     /* The minimax algorithm with alpha-beta tunning
+     * In Negamax implmentation
      */
     fn gen_move_heuristic(
         &mut self,
