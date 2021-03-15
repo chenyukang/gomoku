@@ -124,7 +124,7 @@
       // Data
       current_board = initBoard();
       move_log = [];
-      undo_remaining = 1000;
+      undo_remaining = 100;
 
       initGameDisplay();
 
@@ -398,7 +398,7 @@
       if (result.winning_player == '1') {
         updateStatusPanel('Black wins!', playerColors(), '#448aff');
         gameActive(false, true);
-        //alert("Black Win!");
+        //("Black Win!");
       } else if (result.winning_player == '2') {
         updateStatusPanel('White wins!', playerColors(), '#448aff');
         gameActive(false, true);
