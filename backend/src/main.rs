@@ -19,6 +19,7 @@ fn main() {
         (@arg battle: -b --battle "Run in battle mode")
         (@arg rev_battle: -r --rev_battle "Run in rev battle mode")
         (@arg self_battle: -k --self_battle "Run in battle self mode")
+        (@arg monte_battle: -m --monte_battle "Run in battle monte self mode")
         (@arg other_self_battle: -o --other_self_battle "Run in other battle self mode")
         (@arg width: -w --width +takes_value "The board width")
         (@arg height: -h --height +takes_value "The board height")
@@ -33,6 +34,8 @@ fn main() {
 
     if matches.occurrences_of("battle") > 0 {
         control::battle();
+    } else if matches.occurrences_of("monte_battle") > 0 {
+        control::battle_monte();
     } else if matches.occurrences_of("rev_battle") > 0 {
         control::rev_battle();
     } else if matches.occurrences_of("self_battle") > 0 {

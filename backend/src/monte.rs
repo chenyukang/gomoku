@@ -77,15 +77,15 @@ impl Tree {
 
     fn rollout_policy(&self, moves: &Vec<Move>) -> Move {
         moves[0].clone()
-        /*  let mut rng = rand::thread_rng();
-        let l = std::cmp::min(moves.len(), 4);
+        /* let mut rng = rand::thread_rng();
+        let l = std::cmp::min(moves.len(), 2);
         let idx = rng.gen_range(0..l);
         moves[idx].clone() */
     }
 
     pub fn rollout(&mut self, index: Id) -> Option<u8> {
         let mut current_state = self.descendants[index].state.clone();
-        let mut player = self.descendants[index].player;
+        let mut player = cfg::opponent(self.descendants[index].player);
         //println!("now player: {}", player);
         loop {
             let w = current_state.any_winner();
@@ -104,7 +104,7 @@ impl Tree {
     }
 
     pub fn best_child(&self, index: usize) -> usize {
-        let c_param = 1.4;
+        let c_param = 0.5;
         let mut res = 0;
         let mut cur_max = f64::MIN;
         let node = &self.descendants[index];
@@ -213,12 +213,14 @@ impl MonteCarlo {
     pub fn search_move(&mut self) -> Move {
         for i in 0..self.simulate_count {
             let v = self.tree_policy();
-            println!(
-                "{} {} : rollout {}",
-                (i as f32 * 100.0) / self.simulate_count as f32,
-                v,
-                self.tree.descendants.len()
-            );
+            if i % 100 == 0 {
+                println!(
+                    "{} {} : rollout {}",
+                    (i as f32 * 100.0) / self.simulate_count as f32,
+                    v,
+                    self.tree.descendants.len()
+                );
+            }
             let r = self.tree.rollout(v);
             self.tree.backpropagete(v, r);
         }

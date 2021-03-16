@@ -50,7 +50,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
         //let (score, row, col) = runner.run_heuristic(&mut board, player);
 
         let score = 0;
-        let mut monte = monte::MonteCarlo::new(board.clone(), player, 2000);
+        let mut monte = monte::MonteCarlo::new(board.clone(), player, 1000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
@@ -272,6 +272,42 @@ pub fn battle_self() {
         }
 
         let (_, row, col) = runner.run_heuristic(&mut board, me);
+        println!("+ row: {:?} col: {:?}", row, col);
+        board.place(row, col, me);
+        board.print();
+        if let Some(w) = board.any_winner() {
+            println!("winner is: {} !!!!", w);
+            break;
+        }
+    }
+}
+
+pub fn battle_monte() {
+    let mut board = Board::new_default();
+    let opponent = 2;
+    let me = 1;
+    board.place(7, 7, 1);
+    let mut runner = algo::Runner::new(2, 4);
+    //println!("board: {}", board.to_string());
+    loop {
+        //let (_, row, col) = runner.run_heuristic(&mut board, opponent);
+        //println!("o row: {:?} col: {:?}", row, col);
+        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 1000);
+        let mv = monte.search_move();
+        let row = mv.x;
+        let col = mv.y;
+        board.place(row, col, opponent);
+        board.print();
+        if let Some(w) = board.any_winner() {
+            println!("winner is: {} !!!!", w);
+            break;
+        }
+
+        let mut monte = monte::MonteCarlo::new(board.clone(), me, 1000);
+        let mv = monte.search_move();
+        let row = mv.x;
+        let col = mv.y;
+        //let (_, row, col) = runner.run_heuristic(&mut board, me);
         println!("+ row: {:?} col: {:?}", row, col);
         board.place(row, col, me);
         board.print();

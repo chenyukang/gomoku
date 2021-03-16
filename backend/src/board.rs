@@ -42,11 +42,14 @@ impl Line {
             (v, 0, _) if v >= 5 => 11000,
             (v, 1, _) if v >= 5 => 2000,
             (4, 0, 2) => 10000,
-            (3, 0, 2) => 40,
+            (3, 0, 2) => 50,
+            (4, 0, 1) => 40,
             (4, 1, 1) => 30,
+            (4, 1, 2) => 30,
             (3, 0, 1) => 30,
-            (3, 1, _) => 40,
-            (2, 0, 2) => 40,
+            (3, 1, 2) => 10,
+            (3, 1, 1) => 25,
+            (2, 0, 2) => 25,
             (_, _, _) => 0,
         }
     }
@@ -260,7 +263,7 @@ impl Board {
         let mut score = 0;
         let mut must_blocked = 0;
         let mut two_count = 0;
-        let mut must_blocked_sum_count = 0;
+        //let mut must_blocked_sum_count = 0;
         let lines = self.connect_all_directions(player, row, col);
         assert!(lines.len() <= 4);
         for i in 0..lines.len() {
@@ -277,7 +280,7 @@ impl Board {
             }
             if line.must_be_blocked() {
                 must_blocked += 1;
-                must_blocked_sum_count += line.count;
+                //must_blocked_sum_count += line.count;
             }
             if line.count == 2 && line.open_count >= 2 {
                 two_count += 1;
@@ -285,7 +288,7 @@ impl Board {
             score += line.score();
         }
         if must_blocked >= 2 {
-            return must_blocked_sum_count * 1000;
+            return must_blocked * 1000;
         }
         if two_count >= 3 {
             //println!("two_count now: {}", two_count);
