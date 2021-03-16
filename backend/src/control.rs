@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use super::algo;
 use super::board::*;
+use super::monte;
 use build_timestamp::build_time;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -46,7 +47,14 @@ pub fn solve_it(input: &str, player: u8) -> String {
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let (score, row, col) = runner.run_heuristic(&mut board, player);
+        //let (score, row, col) = runner.run_heuristic(&mut board, player);
+
+        let score = 0;
+        let mut monte = monte::MonteCarlo::new(board.clone(), player, 2000);
+        let mv = monte.search_move();
+        let row = mv.x;
+        let col = mv.y;
+
         board.place(row, col, player);
         if let Some(w) = board.any_winner() {
             println!("winner: {:?}", winner);

@@ -359,6 +359,48 @@ impl Board {
         res
     }
 
+    pub fn gen_ordered_moves_all(&mut self, player: u8) -> Vec<Move> {
+        let mut moves = vec![];
+        let mut row_min = self.height;
+        let mut row_max = 0;
+        let mut col_min = self.width;
+        let mut col_max = 0;
+
+        for i in 0..self.height {
+            for j in 0..self.width {
+                let n = self.get(i as i32, j as i32);
+                if n.is_some() && n != Some(0) {
+                    row_min = min(row_min, i);
+                    row_max = max(row_max, i);
+                    col_min = min(col_min, j);
+                    col_max = max(col_max, j);
+                }
+            }
+        }
+
+        for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
+            for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
+                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
+                    continue;
+                }
+                self.place(i, j, player);
+                let mut score = self.eval_pos(player, i, j) as i32;
+                //println!("{} {} => {}", i, j, score);
+                self.place(i, j, cfg::opponent(player));
+                score -= self.eval_pos(cfg::opponent(player), i, j) as i32;
+                self.place(i, j, 0);
+                moves.push(Move::new(i, j, score as i32, score as i32));
+            }
+        }
+        moves.sort_by(|a, b| b.score.cmp(&a.score));
+        /* println!("begin ===============");
+        for i in 0..moves.len() {
+            println!("player: {} candidates: {:?}", player, moves[i]);
+        }
+        println!("end ====================="); */
+        moves
+    }
+
     pub fn gen_ordered_moves(&mut self, player: u8) -> Vec<Move> {
         let mut moves = vec![];
         let mut row_min = self.height;
@@ -442,6 +484,39 @@ impl Board {
                     _ => Paint::white(" ."),
                 };
                 res += format!("{}", cell).as_str();
+            }
+            println!("{}", res.as_str());
+        }
+    }
+
+    pub fn print_debug(&self, moves: &Vec<Move>, score: &Vec<Vec<usize>>) {
+        use yansi::Paint;
+
+        for i in 0..self.height {
+            let mut res = "".to_string();
+            for j in 0..self.width {
+                let mut found = moves.len();
+                for k in 0..moves.len() {
+                    if i == moves[k].x && j == moves[k].y {
+                        found = k;
+                        break;
+                    }
+                }
+                if found != moves.len() {
+                    let w = score[found][0];
+                    let l = score[found][1];
+                    let r = format!("({}|{})", w, l);
+                    res += format!("{: ^8}", Paint::yellow(r)).as_str();
+                    continue;
+                } else {
+                    let last_placed = i == self.at_x as usize && j == self.at_y as usize;
+                    let cell = match self.cells[i][j] {
+                        1 => Paint::green(if last_placed { " O" } else { " o" }),
+                        2 => Paint::red(if last_placed { " X" } else { " +" }),
+                        _ => Paint::white(" ."),
+                    };
+                    res += format!("{: ^8}", cell).as_str();
+                }
             }
             println!("{}", res.as_str());
         }
