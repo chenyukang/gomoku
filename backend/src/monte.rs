@@ -52,9 +52,10 @@ impl Tree {
 
     pub fn backpropagete(&mut self, index: Id, winner: Option<u8>) {
         self.descendants[index].visited_count += 1;
-        if winner == Some(self.descendants[index].player) {
+        let player = self.descendants[index].player;
+        if winner == Some(player) {
             self.descendants[index].win_count += 1;
-        } else if winner == Some(cfg::opponent(self.descendants[index].player)) {
+        } else if winner == Some(cfg::opponent(player)) {
             self.descendants[index].loss_count += 1;
         }
         if !self.descendants[index].is_root() {
