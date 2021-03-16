@@ -115,6 +115,10 @@ mod tests {
         assert_eq!(root.get_node(0).unwrap().untried_moves.len(), 7);
         assert_eq!(root.get_node(1).unwrap().parent, 0);
         root.backpropagete(1, Some(2));
+
+        assert_eq!(root.get_node(1).unwrap().untried_moves.len(), 12);
+        root.expand(1);
+        assert_eq!(root.get_node(1).unwrap().untried_moves.len(), 11);
     }
 
     #[test]
@@ -128,6 +132,7 @@ mod tests {
         let node_2 = root.new_node(0, Board::new_default(), 2).unwrap();
         assert_eq!(node_2.parent, 0);
         assert_eq!(root.get_node(0).unwrap().children.len(), 1);
+        assert_eq!(root.get_node(1).unwrap().children.len(), 0);
         root.backpropagete(1, Some(1));
         assert_eq!(root.get_node(0).unwrap().loss_count, 1);
         assert_eq!(root.get_node(0).unwrap().win_count, 0);
