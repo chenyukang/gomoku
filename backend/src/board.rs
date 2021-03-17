@@ -394,7 +394,6 @@ impl Board {
                     lose_step = moves.len() as i32;
                 }
                 max_score = std::cmp::max(max_score, score);
-                //println!("score: {} oppo: {}", score, oppo_score);
                 if oppo_score >= 5000 || (oppo_score >= 1000 && score <= 500) {
                     score = oppo_score;
                 }
@@ -408,16 +407,6 @@ impl Board {
         if lose_step != -1 {
             return vec![moves[lose_step as usize]];
         }
-        /*  if max_score < 5000 && blocks.len() > 0 {
-            blocks.sort_by(|a, b| {
-                if a.score != b.score {
-                    b.score.cmp(&a.score)
-                } else {
-                    b.original_score.cmp(&a.original_score)
-                }
-            });
-            return blocks;
-        } */
         moves.sort_by(|a, b| {
             if a.score != b.score {
                 b.score.cmp(&a.score)
