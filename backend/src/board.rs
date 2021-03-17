@@ -474,8 +474,8 @@ impl Board {
                 if found != moves.len() {
                     let w = score[found][0];
                     let l = score[found][1];
-                    let r = format!("{:.1}", w as f32 * 100.0 / (w + l) as f32);
-                    //let r = format!("{}/{}", w, l);
+                    //let r = format!("{:.1}", w as f32 * 100.0 / (w + l) as f32);
+                    let r = format!("{}/{}", w, l);
                     if i == best.x && j == best.y {
                         res += format!("{: ^6}", Paint::yellow(r)).as_str();
                     } else {

@@ -49,9 +49,8 @@ pub fn solve_it(input: &str, player: u8) -> String {
         winner = w;
     } else {
         //let (score, row, col) = runner.run_heuristic(&mut board, player);
-
         let score = 0;
-        let mut monte = monte::MonteCarlo::new(board.clone(), player, 1000);
+        let mut monte = monte::MonteCarlo::new(board.clone(), player, 2000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
@@ -292,7 +291,7 @@ pub fn battle_monte() {
     loop {
         //let (_, row, col) = runner.run_heuristic(&mut board, opponent);
         //println!("o row: {:?} col: {:?}", row, col);
-        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 1000);
+        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 500);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;

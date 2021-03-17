@@ -220,7 +220,7 @@ impl MonteCarlo {
         let mut score = vec![];
         let mut moves = vec![];
         for x in self.tree.nodes[0].children.iter() {
-            //println!("candidte move: {:?}", self.tree.nodes[*x].action);
+            println!("candidte move: {:?}", self.tree.nodes[*x].action);
             moves.push(self.tree.nodes[*x].action.unwrap());
             score.push(vec![
                 self.tree.nodes[*x].win_count as usize,
@@ -485,6 +485,42 @@ mod tests {
             println!("{:?}", moves[x]);
         }
         let mut monte = MonteCarlo::new(board.clone(), 2, 2000);
+        let mv = monte.search_move();
+        println!("move: {:?}", mv);
+        let row = mv.x;
+        let col = mv.y;
+        assert!(row == 5 && col == 7);
+    }
+
+    #[test]
+    fn test_monte_block_three_bug() {
+        let mut board = Board::new(
+            String::from(
+                "000000000000000
+                000000000000000
+                000000000000000
+                000001000000000
+                000000201000000
+                000001220110000
+                000022212200000
+                000112012200000
+                000012120010000
+                000001201000000
+                000021210000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000000000000",
+            ),
+            15,
+            15,
+        );
+        board.print();
+        let moves = board.gen_ordered_moves_all(1);
+        for x in 0..moves.len() {
+            println!("{:?}", moves[x]);
+        }
+        let mut monte = MonteCarlo::new(board.clone(), 1, 2000);
         let mv = monte.search_move();
         println!("move: {:?}", mv);
         let row = mv.x;
