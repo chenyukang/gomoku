@@ -98,7 +98,7 @@ impl Tree {
     }
 
     pub fn best_child(&self, index: usize) -> usize {
-        let c_param = 0.5;
+        let c_param = 0.618;
         let mut res = 0;
         let mut cur_max = f64::MIN;
         let node = &self.nodes[index];
@@ -186,14 +186,11 @@ impl MonteCarlo {
 
     fn tree_policy(&mut self) -> usize {
         let mut cur = 0;
-        loop {
-            if self.tree.nodes[cur].is_terminal_node() {
-                break;
-            }
+        while !self.tree.nodes[cur].is_terminal_node() {
             if !self.tree.nodes[cur].is_fully_expanded() {
                 let n = self.tree.expand(cur);
                 cur = n.unwrap().index;
-                break;
+                return cur;
             } else {
                 cur = self.tree.best_child(cur);
             }
@@ -337,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn test_monte_block_three() {
+    fn test_monte_block_three_full() {
         let mut board = Board::new(
             String::from(
                 "000000000000000
@@ -369,14 +366,6 @@ mod tests {
         println!("children: {}", monte.tree.nodes[0].untried_moves.len());
         assert_eq!(monte.tree.nodes[0].untried_moves.len(), 21);
         assert_eq!(monte.tree.nodes[0].is_fully_expanded(), false);
-        /* monte.tree.expand(0);
-        for x in 0..monte.tree.nodes[0].children.len() {
-            let c = monte.tree.nodes[0].children[x];
-            println!(
-                "candidte state move: {:?}",
-                monte.tree.nodes[c].action
-            );
-        } */
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
@@ -388,26 +377,27 @@ mod tests {
         let board = Board::new(
             String::from(
                 "000020200000000
-            0000011000000000
-            0000010000000000
-            0000110010000000
-            0000211010000000
-            0001222200000000
-            0212210000000000
-            0122220000000000
-            1220100000000002
-            1100000000000200
-            2000000000010000
-            1000000000000000
-            0000000000000000
-            000000000000000000",
+                 000001100000000
+                 000000100000000
+                 000000110010000
+                 000000021101000
+                 000000012222000
+                 000000212210000
+                 000000012220000
+                 000000012201000
+                 000000021100000
+                 000000200200000
+                 000001000000000
+                 000000000000000
+                 000000000000000
+                 000000000000000",
             ),
             15,
             15,
         );
 
         board.print();
-        let mut monte = MonteCarlo::new(board.clone(), 1, 3);
+        let mut monte = MonteCarlo::new(board.clone(), 1, 100);
         assert_eq!(monte.tree.nodes[0].is_fully_expanded(), false);
         assert_eq!(monte.tree.nodes[0].is_terminal_node(), false);
         let mv = monte.search_move();
@@ -419,6 +409,7 @@ mod tests {
         }
         let row = mv.x;
         let col = mv.y;
+        println!("move: {:?}", mv);
         assert!(row == 5 && col == 12);
     }
 
@@ -490,6 +481,7 @@ mod tests {
         let row = mv.x;
         let col = mv.y;
         assert!(row == 5 && col == 7);
+        //assert!(row == 4 && col == 8);
     }
 
     #[test]
@@ -522,9 +514,11 @@ mod tests {
         }
         let mut monte = MonteCarlo::new(board.clone(), 1, 2000);
         let mv = monte.search_move();
+        println!("left: {}", monte.tree.nodes[1].untried_moves.len());
         println!("move: {:?}", mv);
+        assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
         let row = mv.x;
         let col = mv.y;
-        assert!(row == 5 && col == 7);
+        assert!((row == 3 && col == 6) || (row == 2 && col == 6));
     }
 }

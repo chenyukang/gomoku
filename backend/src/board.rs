@@ -374,6 +374,10 @@ impl Board {
             }
         }
 
+        //let mut blocks = vec![];
+        let mut max_score = 0;
+        let mut win_step = -1;
+        let mut lose_step = -1;
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
                 if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
@@ -383,11 +387,13 @@ impl Board {
                 let mut score = self.eval_pos(player, i, j) as i32;
                 self.place(i, j, cfg::opponent(player));
                 let oppo_score = self.eval_pos(cfg::opponent(player), i, j) as i32;
-                if score >= 100000 || oppo_score >= 100000 {
-                    let mv = Move::new(i, j, score as i32, oppo_score as i32);
-                    self.place(i, j, 0);
-                    return vec![mv];
+                if score >= 100000 {
+                    win_step = moves.len() as i32;
                 }
+                if oppo_score >= 100000 {
+                    lose_step = moves.len() as i32;
+                }
+                max_score = std::cmp::max(max_score, score);
                 //println!("score: {} oppo: {}", score, oppo_score);
                 if oppo_score >= 5000 || (oppo_score >= 1000 && score <= 500) {
                     score = oppo_score;
@@ -396,6 +402,22 @@ impl Board {
                 moves.push(Move::new(i, j, score as i32, oppo_score as i32));
             }
         }
+        if win_step != -1 {
+            return vec![moves[win_step as usize]];
+        }
+        if lose_step != -1 {
+            return vec![moves[lose_step as usize]];
+        }
+        /*  if max_score < 5000 && blocks.len() > 0 {
+            blocks.sort_by(|a, b| {
+                if a.score != b.score {
+                    b.score.cmp(&a.score)
+                } else {
+                    b.original_score.cmp(&a.original_score)
+                }
+            });
+            return blocks;
+        } */
         moves.sort_by(|a, b| {
             if a.score != b.score {
                 b.score.cmp(&a.score)
