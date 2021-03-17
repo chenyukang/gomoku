@@ -25,7 +25,14 @@ pub async fn run_server(port: u16) {
         .and(opt_query)
         .map(|p: Option<ReqObject>| match p {
             Some(obj) => {
-                println!("p: {} s: {}", obj.p, obj.s);
+                println!("player: {}", obj.p);
+                for i in 0..15 {
+                    for j in 0..15 {
+                        let c = (i * 15 + j) as usize;
+                        print!("{}", obj.s.chars().nth(c).unwrap());
+                    }
+                    println!();
+                }
                 let result = control::solve_it((obj.s).as_str(), obj.p);
                 Response::builder()
                     .header("Access-Control-Allow-Origin", "*")

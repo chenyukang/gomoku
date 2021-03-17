@@ -137,7 +137,7 @@ impl Board {
                         for k in 0..4 {
                             let d = cfg::DIRS[k];
                             let line = self.connect_direction(p, i, j, d[0], d[1], true);
-                            if line.count >= 5 {
+                            if line.count >= 5 && line.space_count == 0 {
                                 return Some(p);
                             }
                         }
@@ -263,7 +263,6 @@ impl Board {
         let mut score = 0;
         let mut must_blocked = 0;
         let mut two_count = 0;
-        //let mut must_blocked_sum_count = 0;
         let lines = self.connect_all_directions(player, row, col);
         assert!(lines.len() <= 4);
         for i in 0..lines.len() {
@@ -271,28 +270,22 @@ impl Board {
             if line.is_winner_step() {
                 return 100000;
             }
-        }
-        for i in 0..lines.len() {
-            let line = &lines[i];
-            //println!("i: {} line: {:?}", i, line);
             if line.is_non_refutable() {
                 return 5000;
             }
             if line.must_be_blocked() {
                 must_blocked += 1;
-                //must_blocked_sum_count += line.count;
             }
-            if line.count == 2 && line.open_count >= 2 {
+            if line.count >= 3 && line.open_count >= 2 {
                 two_count += 1;
             }
             score += line.score();
         }
-        if must_blocked >= 2 {
-            return must_blocked * 1000;
+        if must_blocked >= 1 {
+            score += must_blocked * 1000;
         }
-        if two_count >= 3 {
-            //println!("two_count now: {}", two_count);
-            score += two_count * 40;
+        if two_count >= 2 {
+            score += two_count * 100;
         }
         return score;
     }
@@ -388,19 +381,28 @@ impl Board {
                 }
                 self.place(i, j, player);
                 let mut score = self.eval_pos(player, i, j) as i32;
-                //println!("{} {} => {}", i, j, score);
                 self.place(i, j, cfg::opponent(player));
-                score -= self.eval_pos(cfg::opponent(player), i, j) as i32;
+                let oppo_score = self.eval_pos(cfg::opponent(player), i, j) as i32;
+                if score >= 100000 || oppo_score >= 100000 {
+                    let mv = Move::new(i, j, score as i32, oppo_score as i32);
+                    self.place(i, j, 0);
+                    return vec![mv];
+                }
+                //println!("score: {} oppo: {}", score, oppo_score);
+                if oppo_score >= 5000 || (oppo_score >= 1000 && score <= 500) {
+                    score = oppo_score;
+                }
                 self.place(i, j, 0);
-                moves.push(Move::new(i, j, score as i32, score as i32));
+                moves.push(Move::new(i, j, score as i32, oppo_score as i32));
             }
         }
-        moves.sort_by(|a, b| b.score.cmp(&a.score));
-        /* println!("begin ===============");
-        for i in 0..moves.len() {
-            println!("player: {} candidates: {:?}", player, moves[i]);
-        }
-        println!("end ====================="); */
+        moves.sort_by(|a, b| {
+            if a.score != b.score {
+                b.score.cmp(&a.score)
+            } else {
+                b.original_score.cmp(&a.original_score)
+            }
+        });
         moves
     }
 
@@ -430,47 +432,11 @@ impl Board {
                 }
                 self.place(i, j, player);
                 let score = self.eval_pos(player, i, j);
-                //println!("{} {} => {}", i, j, score);
                 self.place(i, j, 0);
                 moves.push(Move::new(i, j, score as i32, score as i32));
             }
         }
         moves.sort_by(|a, b| b.score.cmp(&a.score));
-        /* println!("begin ===============");
-        for i in 0..moves.len() {
-            println!("player: {} candidates: {:?}", player, moves[i]);
-        }
-        println!("end ====================="); */
-        moves
-    }
-
-    pub fn gen_possible_moves(&self) -> Vec<Move> {
-        let mut moves = vec![];
-        let mut row_min = self.height;
-        let mut row_max = 0;
-        let mut col_min = self.width;
-        let mut col_max = 0;
-
-        for i in 0..self.height {
-            for j in 0..self.width {
-                let n = self.get(i as i32, j as i32);
-                if n.is_some() && n != Some(0) {
-                    row_min = min(row_min, i);
-                    row_max = max(row_max, i);
-                    col_min = min(col_min, j);
-                    col_max = max(col_max, j);
-                }
-            }
-        }
-
-        for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
-            for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
-                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
-                    continue;
-                }
-                moves.push(Move::new(i, j, 0, 0));
-            }
-        }
         moves
     }
 
@@ -492,7 +458,7 @@ impl Board {
         }
     }
 
-    pub fn print_debug(&self, moves: &Vec<Move>, score: &Vec<Vec<usize>>) {
+    pub fn print_debug(&self, moves: &Vec<Move>, score: &Vec<Vec<usize>>, best: &Move) {
         use yansi::Paint;
 
         for i in 0..self.height {
@@ -508,8 +474,13 @@ impl Board {
                 if found != moves.len() {
                     let w = score[found][0];
                     let l = score[found][1];
-                    let r = format!("({}|{})", w, l);
-                    res += format!("{: ^8}", Paint::yellow(r)).as_str();
+                    let r = format!("{:.1}", w as f32 * 100.0 / (w + l) as f32);
+                    //let r = format!("{}/{}", w, l);
+                    if i == best.x && j == best.y {
+                        res += format!("{: ^6}", Paint::yellow(r)).as_str();
+                    } else {
+                        res += format!("{: ^6}", Paint::blue(r)).as_str();
+                    }
                     continue;
                 } else {
                     let last_placed = i == self.at_x as usize && j == self.at_y as usize;
@@ -518,7 +489,7 @@ impl Board {
                         2 => Paint::red(if last_placed { " X" } else { " +" }),
                         _ => Paint::white(" ."),
                     };
-                    res += format!("{: ^8}", cell).as_str();
+                    res += format!("{: ^6}", cell).as_str();
                 }
             }
             println!("{}", res.as_str());
@@ -571,6 +542,15 @@ mod tests {
         assert_eq!(board.width, 1);
         assert_eq!(board.height, 6);
         assert_eq!(board.to_string(), "121211");
+    }
+
+    #[test]
+    fn test_board_copy() {
+        let board = Board::new(String::from("121211"), 1, 6);
+        let mut copy = board.clone();
+        copy.place(0, 0, 0);
+        assert_eq!(board.get(0, 0), Some(1));
+        assert_eq!(copy.get(0, 0), Some(0));
     }
 
     #[test]

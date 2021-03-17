@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![warn(unused_variables)]
 use super::algo;
 use super::board::*;
 use super::monte;
@@ -287,7 +288,6 @@ pub fn battle_monte() {
     let opponent = 2;
     let me = 1;
     board.place(7, 7, 1);
-    let mut runner = algo::Runner::new(2, 4);
     //println!("board: {}", board.to_string());
     loop {
         //let (_, row, col) = runner.run_heuristic(&mut board, opponent);
