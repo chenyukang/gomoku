@@ -33,36 +33,38 @@ struct Message {
     result: Body,
 }
 
-pub fn solve_it(input: &str, player: u8) -> String {
+pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
     let mut board = Board::from(input.to_string());
     let mut winner = 0;
-    let mut ans_score = 0;
-    let mut ans_col = 0;
-    let mut ans_row = 0;
     cfg_if::cfg_if! {
         if #[cfg(feature = "server")] {
           let start = Instant::now();
         }
     };
     let mut runner = algo::Runner::new(player, 5);
+    let mut score = 0;
+    let mut row = 0;
+    let mut col = 0;
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let (score, row, col) = runner.run_heuristic(&mut board, player);
-        /* let score = 0;
-        let mut monte = monte::MonteCarlo::new(board.clone(), player, 8000);
-        let mv = monte.search_move();
-        let row = mv.x;
-        let col = mv.y; */
+        if algo_role == 0 {
+            let (s, r, c) = runner.run_heuristic(&mut board, player);
+            score = s;
+            row = r;
+            col = c;
+        } else {
+            let mut monte = monte::MonteCarlo::new(board.clone(), player, 2000);
+            let mv = monte.search_move();
+            row = mv.x;
+            col = mv.y;
+        }
 
         board.place(row, col, player);
         if let Some(w) = board.any_winner() {
             println!("winner: {:?}", winner);
             winner = w;
         }
-        ans_score = score;
-        ans_row = row;
-        ans_col = col;
     }
     cfg_if::cfg_if! {
         if #[cfg(feature = "server")] {
@@ -78,13 +80,13 @@ pub fn solve_it(input: &str, player: u8) -> String {
             ai_player: player,
             cpu_time: format!("{:?}", duration),
             eval_count: runner.eval_node,
-            move_c: ans_col,
-            move_r: ans_row,
+            move_c: col,
+            move_r: row,
             node_count: runner.eval_node,
             num_threads: 1,
             search_depth: 9,
             winning_player: winner,
-            score: ans_score,
+            score: score,
             build: BUILD_TIME.to_string(),
         },
     };
