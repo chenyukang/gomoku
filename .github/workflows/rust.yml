@@ -17,6 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cd backend && cargo build --release --verbose
+      run: ./wasm.sh
     - name: Run tests
-      run: cd backend && cargo test --release --verbose
+      run: cd backend && cargo test --release --verbose --features "server, random"
