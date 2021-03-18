@@ -126,7 +126,7 @@ impl Tree {
     }
 
     pub fn best_move(&self, index: usize) -> usize {
-        let mut res = 0;
+        let mut res = -1;
         let mut cur_max = f64::MIN;
         let node = &self.nodes[index];
         for i in 0..node.children.len() {
@@ -134,10 +134,14 @@ impl Tree {
             let v = c.win_count as f64 / c.visited_count as f64;
             if v > cur_max && c.visited_count >= 8 {
                 cur_max = v;
-                res = c.index;
+                res = c.index as i32;
             }
         }
-        return res;
+        if res == -1 {
+            self.nodes[index].children[0]
+        } else {
+            res as usize
+        }
     }
 }
 
@@ -298,7 +302,7 @@ mod tests {
         assert_eq!(root.get_node(0).unwrap().player, 2);
 
         let res = root.rollout(0);
-        assert_eq!(res.is_some(), false);
+        assert_eq!(res.is_some(), true);
     }
 
     #[test]
@@ -309,7 +313,7 @@ mod tests {
         assert_eq!(monte_carlo.tree.nodes[0].is_fully_expanded(), false);
         let mv = monte_carlo.search_move();
         println!("{:?}", mv);
-        assert_eq!(mv.x == 7 || mv.y == 7, true);
+        assert!((mv.x as i32 - 7 as i32).abs() <= 1 && (mv.y as i32 - 7 as i32).abs() <= 1);
     }
 
     #[test]
@@ -336,6 +340,7 @@ mod tests {
             15,
         );
 
+        board.print();
         let mut monte = MonteCarlo::new(board.clone(), 2, 100);
         let mv = monte.search_move();
         let row = mv.x;

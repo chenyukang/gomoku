@@ -679,7 +679,7 @@ mod tests {
     #[test]
     fn test_board_score() {
         let mut board = Board::new(String::from("1111020000"), 5, 2);
-        assert_eq!(board.eval_pos(1, 0, 0), 0);
+        assert_eq!(board.eval_pos(1, 0, 0), 1050);
         assert_eq!(board.eval_pos(2, 1, 0), 0);
 
         board = Board::new(String::from("1111111111"), 5, 2);
@@ -727,7 +727,7 @@ mod tests {
             5,
             4,
         );
-        assert_eq!(board.eval_all(1), 80);
+        assert_eq!(board.eval_all(1), 50);
 
         board = Board::new(
             String::from(
@@ -742,7 +742,7 @@ mod tests {
             6,
             6,
         );
-        assert_eq!(board.eval_all(1), 72000);
+        assert_eq!(board.eval_all(1), 27750);
 
         board = Board::new(
             String::from(
@@ -753,7 +753,7 @@ mod tests {
             6,
             2,
         );
-        assert_eq!(board.eval_all(1), 120);
+        assert_eq!(board.eval_all(1), 75);
 
         board = Board::new(
             String::from(
@@ -764,7 +764,7 @@ mod tests {
             7,
             2,
         );
-        assert_eq!(board.eval_all(1), 150);
+        assert_eq!(board.eval_all(1), 4180);
 
         board = Board::new(
             String::from(
@@ -794,7 +794,7 @@ mod tests {
             7,
             5,
         );
-        assert_eq!(board.eval_pos(1, 3, 3), 6000);
+        assert_eq!(board.eval_pos(1, 3, 3), 2300);
 
         board = Board::new(
             String::from(
@@ -809,7 +809,7 @@ mod tests {
             7,
             5,
         );
-        assert_eq!(board.eval_all(1), 80);
+        assert_eq!(board.eval_all(1), 50);
 
         board = Board::new(
             String::from(
@@ -825,7 +825,7 @@ mod tests {
             7,
             6,
         );
-        assert_eq!(board.eval_all(1), 80);
+        assert_eq!(board.eval_all(1), 50);
 
         board = Board::new(
             String::from(
@@ -859,7 +859,7 @@ mod tests {
             7,
             7,
         );
-        assert_eq!(board.eval_pos(1, 3, 4), 80);
+        assert_eq!(board.eval_pos(1, 3, 4), 50);
 
         board = Board::new(
             String::from(
@@ -876,7 +876,7 @@ mod tests {
             7,
             7,
         );
-        assert_eq!(board.eval_pos(1, 1, 3), 0);
+        assert_eq!(board.eval_pos(1, 1, 3), 1050);
     }
 
     #[test]
