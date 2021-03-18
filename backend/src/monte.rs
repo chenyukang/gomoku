@@ -390,7 +390,7 @@ mod tests {
         }
         let mut monte = MonteCarlo::new(board, 1, 2000);
         println!("children: {}", monte.tree.nodes[0].untried_moves.len());
-        assert_eq!(monte.tree.nodes[0].untried_moves.len(), 21);
+        assert_eq!(monte.tree.nodes[0].untried_moves.len(), 20);
         assert_eq!(monte.tree.nodes[0].is_fully_expanded(), false);
         let mv = monte.search_move();
         let row = mv.x;
@@ -510,7 +510,7 @@ mod tests {
         let row = mv.x;
         let col = mv.y;
         println!("{:?}", mv);
-        assert!(row == 3 && col == 6);
+        assert!(row == 5 && col == 12);
     }
 
     #[test]
@@ -623,7 +623,7 @@ mod tests {
         assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
         let row = mv.x;
         let col = mv.y;
-        assert!((row == 3 && col == 6) || (row == 2 && col == 6) || (row == 12 && col == 7));
+        assert!(row == 11 && col == 5);
     }
 
     #[test]
@@ -659,7 +659,8 @@ mod tests {
         let col = mv.y;
         board.place(row, col, 1);
         board.print();
-        assert!((row == 3 && col == 6) || (row == 2 && col == 6) || (row == 12 && col == 7));
+        println!("{:?}", mv);
+        assert!(row == 7 && col == 8);
     }
 }
 
