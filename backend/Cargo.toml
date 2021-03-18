@@ -13,8 +13,8 @@ name = "gomoku"
 path = "src/main.rs"
 
 [lib]
-crate-type = ["cdylib"]
-name = "gomoku_wasm"
+crate-type = ["cdylib", "lib"]
+name = "gomoku"
 path = "src/lib.rs"
 
 [dependencies]

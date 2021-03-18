@@ -7,6 +7,9 @@ mod control;
 mod monte;
 mod utils;
 
+#[cfg(test)]
+mod board_test;
+
 #[wasm_bindgen]
 pub fn gomoku_solve(input: String, player: i32) -> String {
     let board = input.clone();
