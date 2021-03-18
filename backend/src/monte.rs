@@ -55,7 +55,12 @@ impl Tree {
         self.nodes[index].untried_moves.remove(0);
         let mut board = self.nodes[index].state.clone();
         board.place(mv.x, mv.y, player);
-        self.new_node(index, board, cfg::opponent(player), Some(mv))
+        self.new_node(
+            index,
+            board,
+            cfg::opponent(player),
+            if index == 0 { Some(mv) } else { None },
+        )
     }
 
     fn backpropagete(&mut self, index: Id, winner: Option<u8>) {
@@ -89,7 +94,7 @@ impl Tree {
                 let idx = rng.gen_range(0..idx + 1);
                 moves[idx].clone()
             } else {
-            moves[0].clone()
+                moves[0].clone()
             }
         }
     }
@@ -97,12 +102,12 @@ impl Tree {
     pub fn rollout(&mut self, index: Id) -> Option<u8> {
         let mut current_state = self.nodes[index].state.clone();
         let mut player = self.nodes[index].player;
+        player = cfg::opponent(player);
         loop {
             let w = current_state.any_winner();
             if w.is_some() {
                 return w;
             } else {
-                player = cfg::opponent(player);
                 let moves = current_state.gen_ordered_moves_all(player);
                 if moves.len() == 0 {
                     return None;
@@ -115,7 +120,7 @@ impl Tree {
 
     pub fn best_child(&self, index: usize) -> usize {
         //let c_param = 0.5;
-        let c_param = 1.618;
+        let c_param = 0.7;
         let mut res = 0;
         let mut cur_max = f64::MIN;
         let node = &self.nodes[index];
@@ -440,6 +445,43 @@ mod tests {
             String::from(
                 "000000000000000
                 000000000000000
+                000001000000000
+                000000200000000
+                000022120000000
+                000000102000000
+                000000211201000
+                000000121010000
+                000000010100000
+                000000000020000
+                000000020000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000000000000",
+            ),
+            15,
+            15,
+        );
+        let moves = board.gen_ordered_moves_all(2);
+        for x in 0..moves.len() {
+            println!("{:?}", moves[x]);
+        }
+        let mut monte = MonteCarlo::new(board.clone(), 2, 2000);
+        let mv = monte.search_move();
+        board.place(mv.x, mv.y, 2);
+        board.print();
+        let row = mv.x;
+        let col = mv.y;
+        println!("{:?}", mv);
+        assert!(row == 5 && col == 5);
+    }
+
+    #[test]
+    fn test_monte_block_five_orig() {
+        let mut board = Board::new(
+            String::from(
+                "000000000000000
+                000000000000000
                 000000000000000
                 000000000000000
                 000002020000000
@@ -463,9 +505,12 @@ mod tests {
         }
         let mut monte = MonteCarlo::new(board.clone(), 2, 2000);
         let mv = monte.search_move();
+        board.place(mv.x, mv.y, 2);
+        board.print();
         let row = mv.x;
         let col = mv.y;
-        assert!(row == 9 && col == 8);
+        println!("{:?}", mv);
+        assert!(row == 3 && col == 6);
     }
 
     #[test]
@@ -578,6 +623,42 @@ mod tests {
         assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
         let row = mv.x;
         let col = mv.y;
+        assert!((row == 3 && col == 6) || (row == 2 && col == 6) || (row == 12 && col == 7));
+    }
+
+    #[test]
+    fn test_monte_block_win_step() {
+        let mut board = Board::new(
+            String::from(
+                "000000000000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000200000000
+                000021110000000
+                000002210000000
+                000000120000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000000000000000",
+            ),
+            15,
+            15,
+        );
+        board.print();
+        let mut monte = MonteCarlo::new(board.clone(), 1, 2000);
+        let mv = monte.search_move();
+        println!("left: {}", monte.tree.nodes[1].untried_moves.len());
+        println!("move: {:?}", mv);
+        assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
+        let row = mv.x;
+        let col = mv.y;
+        board.place(row, col, 1);
+        board.print();
         assert!((row == 3 && col == 6) || (row == 2 && col == 6) || (row == 12 && col == 7));
     }
 }

@@ -33,7 +33,7 @@ pub async fn run_server(port: u16) {
                     }
                     println!();
                 }
-                let result = control::solve_it((obj.s).as_str(), obj.p, 0);
+                let result = control::solve_it((obj.s).as_str(), obj.p, 1);
                 Response::builder()
                     .header("Access-Control-Allow-Origin", "*")
                     .body(result)

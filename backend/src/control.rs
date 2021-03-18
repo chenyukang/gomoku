@@ -54,7 +54,7 @@ pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
             row = r;
             col = c;
         } else {
-            let mut monte = monte::MonteCarlo::new(board.clone(), player, 2000);
+            let mut monte = monte::MonteCarlo::new(board.clone(), player, 6000);
             let mv = monte.search_move();
             row = mv.x;
             col = mv.y;
@@ -293,7 +293,7 @@ pub fn battle_monte() {
     loop {
         //let (_, row, col) = runner.run_heuristic(&mut board, opponent);
         //println!("o row: {:?} col: {:?}", row, col);
-        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 500);
+        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 4000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
@@ -304,7 +304,7 @@ pub fn battle_monte() {
             break;
         }
 
-        let mut monte = monte::MonteCarlo::new(board.clone(), me, 1000);
+        let mut monte = monte::MonteCarlo::new(board.clone(), me, 4000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
