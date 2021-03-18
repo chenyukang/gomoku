@@ -50,7 +50,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
     } else {
         //let (score, row, col) = runner.run_heuristic(&mut board, player);
         let score = 0;
-        let mut monte = monte::MonteCarlo::new(board.clone(), player, 1500);
+        let mut monte = monte::MonteCarlo::new(board.clone(), player, 8000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;

@@ -71,11 +71,21 @@ impl Tree {
     }
 
     fn rollout_policy(&self, moves: &Vec<Move>) -> Move {
-        moves[0].clone()
-        /* let mut rng = rand::thread_rng();
-        let l = std::cmp::min(moves.len(), 2);
-        let idx = rng.gen_range(0..l);
-        moves[idx].clone() */
+        //moves[0].clone()
+        let mut rng = rand::thread_rng();
+        let mut idx = 0;
+        loop {
+            if idx + 1 < moves.len()
+                && moves[idx].score == moves[idx + 1].score
+                && moves[idx].original_score == moves[idx + 1].original_score
+            {
+                idx += 1;
+            } else {
+                break;
+            }
+        }
+        let idx = rng.gen_range(0..idx + 1);
+        moves[idx].clone()
     }
 
     pub fn rollout(&mut self, index: Id) -> Option<u8> {
@@ -98,14 +108,15 @@ impl Tree {
     }
 
     pub fn best_child(&self, index: usize) -> usize {
-        let c_param = 0.618;
+        //let c_param = 0.5;
+        let c_param = 1.618;
         let mut res = 0;
         let mut cur_max = f64::MIN;
         let node = &self.nodes[index];
         for i in 0..node.children.len() {
             let c = &self.nodes[node.children[i]];
             let r = (2.0 * node.n().ln() / c.n()).sqrt();
-            let v = (c.q() / c.n()) + c_param * r;
+            let v = c.q() / c.n() + c_param * r;
             if v > cur_max {
                 cur_max = v;
                 res = c.index;
@@ -121,7 +132,7 @@ impl Tree {
         for i in 0..node.children.len() {
             let c = &self.nodes[node.children[i]];
             let v = c.win_count as f64 / c.visited_count as f64;
-            if v > cur_max {
+            if v > cur_max && c.visited_count >= 8 {
                 cur_max = v;
                 res = c.index;
             }
@@ -189,8 +200,7 @@ impl MonteCarlo {
         while !self.tree.nodes[cur].is_terminal_node() {
             if !self.tree.nodes[cur].is_fully_expanded() {
                 let n = self.tree.expand(cur);
-                cur = n.unwrap().index;
-                return cur;
+                return n.unwrap().index;
             } else {
                 cur = self.tree.best_child(cur);
             }
@@ -203,7 +213,7 @@ impl MonteCarlo {
             let v = self.tree_policy();
             if i % 100 == 0 {
                 println!(
-                    "{} {} : rollout {}",
+                    "%{:.2} {} : rollout {}",
                     (i as f32 * 100.0) / self.simulate_count as f32,
                     v,
                     self.tree.nodes.len()
@@ -521,6 +531,44 @@ mod tests {
         let col = mv.y;
         assert!((row == 3 && col == 6) || (row == 2 && col == 6));
     }
+
+    #[test]
+    fn test_monte_block_three_trivial_bug() {
+        let mut board = Board::new(
+            String::from(
+                "000000000000000
+                000000000000000
+                000000000000000
+                000000000000000
+                000002000000000
+                000000100000000
+                000001012200000
+                000022211000000
+                000000112100000
+                000011121020000
+                000011020200000
+                000220000000000
+                000000000000000
+                000000000000000
+                000000000000000",
+            ),
+            15,
+            15,
+        );
+        board.print();
+        let moves = board.gen_ordered_moves_all(2);
+        for x in 0..moves.len() {
+            println!("{:?}", moves[x]);
+        }
+        let mut monte = MonteCarlo::new(board.clone(), 2, 2000);
+        let mv = monte.search_move();
+        println!("left: {}", monte.tree.nodes[1].untried_moves.len());
+        println!("move: {:?}", mv);
+        assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
+        let row = mv.x;
+        let col = mv.y;
+        assert!((row == 3 && col == 6) || (row == 2 && col == 6));
+    }
 }
 
 /*
@@ -540,3 +588,22 @@ player 1
 000000000000000
 000000000000000
 000000000000000 */
+
+/*
+player: 2
+000000000000000
+000000000000000
+000000000000000
+000000000000000
+000002000000000
+000000100000000
+000001012200000
+000022211000000
+000000112100000
+000011121020000
+000011020200000
+000220000000000
+000000000000000
+000000000000000
+000000000000000
+*/

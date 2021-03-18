@@ -43,7 +43,7 @@ impl Line {
             (v, 1, _) if v >= 5 => 2000,
             (4, 0, 2) => 10000,
             (3, 0, 2) => 50,
-            (4, 0, 1) => 40,
+            (4, 0, 1) => 50,
             (4, 1, 1) => 30,
             (4, 1, 2) => 30,
             (3, 0, 1) => 30,
@@ -378,6 +378,7 @@ impl Board {
         let mut max_score = 0;
         let mut win_step = -1;
         let mut lose_step = -1;
+        let mut max_oppo = 0;
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
                 if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
@@ -394,7 +395,8 @@ impl Board {
                     lose_step = moves.len() as i32;
                 }
                 max_score = std::cmp::max(max_score, score);
-                if oppo_score >= 5000 || (oppo_score >= 1000 && score <= 500) {
+                max_oppo = std::cmp::max(max_oppo, oppo_score);
+                if oppo_score >= 5000 && score <= 2000 {
                     score = oppo_score;
                 }
                 self.place(i, j, 0);
