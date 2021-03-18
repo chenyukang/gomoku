@@ -1,6 +1,6 @@
 # gomoku
 
-[![Build Status](https://travis-ci.com/chenyukang/gomoku.svg?branch=main)](https://travis-ci.com/chenyukang/gomoku)
+[![Build Status](https://github.com/chenyukang/gomoku/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/chenyukang/gomoku/actions/workflows/rust.yml)
 
 A Gomoku Web Applition to explore minimax algorithm with alpha-beta tunning,
 Azure Function, Rust and WebAssembly.
