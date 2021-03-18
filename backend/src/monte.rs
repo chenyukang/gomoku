@@ -102,7 +102,6 @@ impl Tree {
     pub fn rollout(&mut self, index: Id) -> Option<u8> {
         let mut current_state = self.nodes[index].state.clone();
         let mut player = self.nodes[index].player;
-        player = cfg::opponent(player);
         loop {
             let w = current_state.any_winner();
             if w.is_some() {
@@ -114,6 +113,7 @@ impl Tree {
                 }
                 let mv = self.rollout_policy(&moves);
                 current_state.place(mv.x, mv.y, player);
+                player = cfg::opponent(player);
             }
         }
     }

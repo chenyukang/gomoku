@@ -130,22 +130,42 @@ impl Board {
         }
     }
     pub fn any_winner(&self) -> Option<u8> {
-        for i in 0..self.height {
-            for j in 0..self.width {
-                for p in 1..3 {
-                    if self.get(i as i32, j as i32) == Some(p) {
-                        for k in 0..4 {
-                            let d = cfg::DIRS[k];
-                            let line = self.connect_direction(p, i, j, d[0], d[1], true);
-                            if line.count >= 5 && line.space_count == 0 {
-                                return Some(p);
+        if self.at_x != -1 && self.at_y != -1 {
+            for p in 1..3 {
+                for k in 0..4 {
+                    let d = cfg::DIRS[k];
+                    let line = self.connect_direction(
+                        p,
+                        self.at_x as usize,
+                        self.at_y as usize,
+                        d[0],
+                        d[1],
+                        true,
+                    );
+                    if line.count >= 5 && line.space_count == 0 {
+                        return Some(p);
+                    }
+                }
+            }
+            None
+        } else {
+            for i in 0..self.height {
+                for j in 0..self.width {
+                    for p in 1..3 {
+                        if self.get(i as i32, j as i32) == Some(p) {
+                            for k in 0..4 {
+                                let d = cfg::DIRS[k];
+                                let line = self.connect_direction(p, i, j, d[0], d[1], true);
+                                if line.count >= 5 && line.space_count == 0 {
+                                    return Some(p);
+                                }
                             }
                         }
                     }
                 }
             }
+            None
         }
-        None
     }
 
     pub fn eval_all(&mut self, player: u8) -> u32 {
@@ -416,7 +436,7 @@ impl Board {
                 b.original_score.cmp(&a.original_score)
             }
         });
-        let len = std::cmp::min(20, moves.len());
+        let len = std::cmp::min(5, moves.len());
         moves.drain(..len).collect()
     }
 
