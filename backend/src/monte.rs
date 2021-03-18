@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use super::board::*;
 use super::utils::*;
+#[cfg(feature = "random")]
 use rand::Rng;
 
 type Id = usize;
@@ -71,21 +72,26 @@ impl Tree {
     }
 
     fn rollout_policy(&self, moves: &Vec<Move>) -> Move {
-        //moves[0].clone()
-        let mut rng = rand::thread_rng();
-        let mut idx = 0;
-        loop {
-            if idx + 1 < moves.len()
-                && moves[idx].score == moves[idx + 1].score
-                && moves[idx].original_score == moves[idx + 1].original_score
-            {
-                idx += 1;
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "random")] {
+                let mut rng = rand::thread_rng();
+                let mut idx = 0;
+                loop {
+                    if idx + 1 < moves.len()
+                    && moves[idx].score == moves[idx + 1].score
+                    && moves[idx].original_score == moves[idx + 1].original_score
+                    {
+                        idx += 1;
+                    } else {
+                        break;
+                    }
+                }
+                let idx = rng.gen_range(0..idx + 1);
+                moves[idx].clone()
             } else {
-                break;
+            moves[0].clone()
             }
         }
-        let idx = rng.gen_range(0..idx + 1);
-        moves[idx].clone()
     }
 
     pub fn rollout(&mut self, index: Id) -> Option<u8> {
