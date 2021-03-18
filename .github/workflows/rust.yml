@@ -17,6 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo install wasm-bindgen-cli && ./wasm.sh
+      run: cargo install wasm-bindgen-cli wasm-pack && ./wasm.sh
     - name: Run tests
       run: cd backend && cargo test --release --verbose --features "server, random"
