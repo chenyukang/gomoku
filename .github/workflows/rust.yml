@@ -19,4 +19,4 @@ jobs:
     - name: Build
       run: cargo install wasm-bindgen-cli wasm-pack && ./wasm.sh
     - name: Run tests
-      run: cd backend && cargo test --release --verbose --features "server, random"
+      run: cd backend && cargo test --release --features "server, random"
