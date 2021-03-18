@@ -44,7 +44,7 @@ pub fn solve_it(input: &str, player: u8) -> String {
           let start = Instant::now();
         }
     };
-    let mut runner = algo::Runner::new(player, 4);
+    let mut runner = algo::Runner::new(player, 5);
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
