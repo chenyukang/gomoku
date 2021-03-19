@@ -390,7 +390,6 @@ impl Board {
                 let oppo_score = self.eval_pos(cfg::opponent(player), i, j) as i32;
                 if score >= 100000 {
                     win_step = moves.len() as i32;
-                    score += 1;
                 }
                 if oppo_score >= 100000 {
                     lose_step = moves.len() as i32;
@@ -547,10 +546,6 @@ impl Move {
 
     pub fn is_dead_move(&self) -> bool {
         self.score >= 100000
-    }
-
-    pub fn is_win_move(&self) -> bool {
-        self.score >= 100001
     }
 }
 
