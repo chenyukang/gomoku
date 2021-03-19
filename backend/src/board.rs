@@ -390,6 +390,7 @@ impl Board {
                 let oppo_score = self.eval_pos(cfg::opponent(player), i, j) as i32;
                 if score >= 100000 {
                     win_step = moves.len() as i32;
+                    score += 1;
                 }
                 if oppo_score >= 100000 {
                     lose_step = moves.len() as i32;
@@ -416,7 +417,10 @@ impl Board {
                 b.original_score.cmp(&a.original_score)
             }
         });
-        let len = std::cmp::min(20, moves.len());
+        let mut len = std::cmp::min(8, moves.len());
+        if max_oppo >= 5000 && max_score < 5000 {
+            len = 1;
+        }
         moves.drain(..len).collect()
     }
 
@@ -543,6 +547,10 @@ impl Move {
 
     pub fn is_dead_move(&self) -> bool {
         self.score >= 100000
+    }
+
+    pub fn is_win_move(&self) -> bool {
+        self.score >= 100001
     }
 }
 
