@@ -54,7 +54,7 @@ pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
             row = r;
             col = c;
         } else {
-            let mut monte = monte::MonteCarlo::new(board.clone(), player, 3000);
+            let mut monte = monte::MonteCarlo::new(board.clone(), player, 1000);
             let mv = monte.search_move();
             row = mv.x;
             col = mv.y;
