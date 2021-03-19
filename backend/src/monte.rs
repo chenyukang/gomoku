@@ -103,18 +103,16 @@ impl Tree {
         let mut current_state = self.nodes[index].state.clone();
         let mut player = self.nodes[index].player;
         loop {
-            let w = current_state.any_winner();
-            if w.is_some() {
-                return w;
-            } else {
-                let moves = current_state.gen_ordered_moves_all(player);
-                if moves.len() == 0 {
-                    return None;
-                }
-                let mv = self.rollout_policy(&moves);
-                current_state.place(mv.x, mv.y, player);
-                player = cfg::opponent(player);
+            player = cfg::opponent(player);
+            let moves = current_state.gen_ordered_moves_all(player);
+            if moves.len() == 0 {
+                return None;
             }
+            let mv = self.rollout_policy(&moves);
+            if mv.is_dead_move() {
+                return Some(player);
+            }
+            current_state.place(mv.x, mv.y, player);
         }
     }
 
@@ -503,14 +501,14 @@ mod tests {
         for x in 0..moves.len() {
             println!("{:?}", moves[x]);
         }
-        let mut monte = MonteCarlo::new(board.clone(), 2, 2000);
+        let mut monte = MonteCarlo::new(board.clone(), 2, 4000);
         let mv = monte.search_move();
         board.place(mv.x, mv.y, 2);
         board.print();
         let row = mv.x;
         let col = mv.y;
         println!("{:?}", mv);
-        assert!(row == 5 && col == 12);
+        assert!(row == 9 && col == 8);
     }
 
     #[test]
@@ -602,10 +600,10 @@ mod tests {
                 000022211000000
                 000000112100000
                 000011121020000
-                000011020200000
-                000220000000000
-                000000000000000
-                000000000000000
+                000011021220000
+                000220021000000
+                000000020000000
+                000000010000000
                 000000000000000",
             ),
             15,
@@ -623,6 +621,8 @@ mod tests {
         assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
         let row = mv.x;
         let col = mv.y;
+        board.place(row, col, 2);
+        board.print();
         assert!(row == 11 && col == 5);
     }
 
