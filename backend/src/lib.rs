@@ -2,9 +2,9 @@
 // Import the wasm-bindgen crate.
 use wasm_bindgen::prelude::*;
 mod algo;
-mod board;
+pub mod board;
 mod control;
-mod monte;
+pub mod monte;
 mod utils;
 
 #[wasm_bindgen]

@@ -13,11 +13,12 @@ name = "gomoku"
 path = "src/main.rs"
 
 [lib]
-crate-type = ["cdylib"]
-name = "gomoku_wasm"
+crate-type = ["cdylib", "lib"]
+name = "gomoku"
 path = "src/lib.rs"
 
 [dependencies]
+glob = "0.3.0"
 rand = { version = "0.8.0",  optional = true}
 generational-arena = "0.2"
 cfg-if = "0.1"

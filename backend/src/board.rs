@@ -129,6 +129,7 @@ impl Board {
             at_y: -1,
         }
     }
+
     pub fn any_winner(&self) -> Option<u8> {
         for i in 0..self.height {
             for j in 0..self.width {
@@ -146,6 +147,25 @@ impl Board {
             }
         }
         None
+    }
+
+    pub fn next_player(&self) -> u8 {
+        let mut p1 = 0;
+        let mut p2 = 0;
+        for i in 0..self.height {
+            for j in 0..self.width {
+                match self.get(i as i32, j as i32) {
+                    Some(1) => p1 += 1,
+                    Some(2) => p2 += 1,
+                    _ => (),
+                }
+            }
+        }
+        if p1 == p2 {
+            return 1;
+        } else {
+            return 2;
+        }
     }
 
     pub fn eval_all(&mut self, player: u8) -> u32 {

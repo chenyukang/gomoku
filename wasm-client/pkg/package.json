@@ -5,11 +5,11 @@
   ],
   "version": "0.1.0",
   "files": [
-    "gomoku_wasm_bg.wasm",
-    "gomoku_wasm.js",
-    "gomoku_wasm.d.ts"
+    "gomoku_bg.wasm",
+    "gomoku.js",
+    "gomoku.d.ts"
   ],
-  "module": "gomoku_wasm.js",
-  "types": "gomoku_wasm.d.ts",
+  "module": "gomoku.js",
+  "types": "gomoku.d.ts",
   "sideEffects": false
 }
