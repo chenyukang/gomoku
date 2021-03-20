@@ -112,10 +112,6 @@ impl Tree {
             }
             let mv = rollout_move.unwrap();
             current_state.place(mv.x, mv.y, player);
-            /*  println!(
-                "player placed ......cnt({}): {}  index: {}",
-                cnt, player, index
-            ); */
             player = cfg::opponent(player);
             if mv.is_dead_move() {
                 let winner = current_state.any_winner();
@@ -735,43 +731,5 @@ mod tests {
         board.print();
         println!("{:?}", mv);
         assert!(row == 6 && col == 9);
-    }
-
-    #[test]
-    fn test_monte_block_block_follow_win_rate() {
-        let mut board = Board::new(
-            String::from(
-                "000000000000000
-                000000000000000
-                000000000000000
-                000000020000000
-                000200100000000
-                000211100001000
-                000011101222210
-                000002111220000
-                000000212110000
-                000000122221000
-                000001122020000
-                000020002100000
-                000000001000000
-                000000000000000
-                000000000000000",
-            ),
-            15,
-            15,
-        );
-        board.print();
-        let player = 2;
-        let mut monte = MonteCarlo::new(board.clone(), player, 2000);
-        let mv = monte.search_move();
-        println!("left: {}", monte.tree.nodes[1].untried_moves.len());
-        println!("move: {:?}", mv);
-        assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
-        let row = mv.x;
-        let col = mv.y;
-        board.place(row, col, player);
-        board.print();
-        println!("{:?}", mv);
-        assert!(row == 6 && col == 7);
     }
 }
