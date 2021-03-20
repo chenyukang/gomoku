@@ -14,16 +14,15 @@ pub struct Runner {
 
 impl Runner {
     pub fn new(player: u8, depth: i32) -> Self {
-        let debug = match env::var("GOMOKU_DEBUG") {
-            Ok(_) => true,
-            _ => false,
-        };
         Self {
             player: player,
             depth: depth,
             gen_move_count: 0,
             eval_node: 0,
-            debug: debug,
+            debug: match env::var("GOMOKU_DEBUG") {
+                Ok(_) => true,
+                _ => false,
+            },
         }
     }
 

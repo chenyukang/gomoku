@@ -3,6 +3,7 @@ use super::board::*;
 use super::utils::*;
 #[cfg(feature = "random")]
 use rand::Rng;
+use std::env;
 
 type Id = usize;
 
@@ -193,6 +194,7 @@ impl Node {
 pub struct MonteCarlo {
     tree: Tree,
     simulate_count: u32,
+    debug: bool,
 }
 
 impl MonteCarlo {
@@ -200,15 +202,23 @@ impl MonteCarlo {
         let mut s = Self {
             tree: Tree::new(),
             simulate_count: simulate_count,
+            debug: match env::var("GOMOKU_DEBUG") {
+                Ok(_) => true,
+                _ => false,
+            },
         };
         s.tree.new_node(0, state, player, None);
         s
     }
 
+    fn get(&self, index: usize) -> &Node {
+        self.tree.get_node(index).unwrap()
+    }
+
     fn tree_policy(&mut self) -> usize {
         let mut cur = 0;
-        while !self.tree.nodes[cur].is_terminal_node() {
-            if !self.tree.nodes[cur].is_fully_expanded() {
+        while !self.get(cur).is_terminal_node() {
+            if !self.get(cur).is_fully_expanded() {
                 let n = self.tree.expand(cur);
                 return n.unwrap().index;
             } else {
@@ -232,27 +242,31 @@ impl MonteCarlo {
             let r = self.tree.rollout(v);
             self.tree.backpropagete(v, r);
         }
-        let best = self.tree.best_move(0);
-        println!("len: {} best: {}", self.tree.nodes[0].children.len(), best);
-        let mut score = vec![];
-        let mut moves = vec![];
-        for x in self.tree.nodes[0].children.iter() {
-            println!("candidte move: {:?}", self.tree.nodes[*x].action);
-            moves.push(self.tree.nodes[*x].action.unwrap());
-            score.push(vec![
-                self.tree.nodes[*x].win_count as usize,
-                self.tree.nodes[*x].loss_count as usize,
-            ]);
-        }
-        let res = self.tree.nodes[best].action.unwrap();
-        println!("best move: {:?}", res);
-        self.tree.nodes[best]
-            .state
-            .print_debug(&moves, &score, &res);
-        println!("win: {}", self.tree.nodes[best].win_count);
-        println!("loss: {}", self.tree.nodes[best].loss_count);
-        println!("visited: {}", self.tree.nodes[best].visited_count);
+        let best = self.tree.best_child(0);
+        let res = self.get(best).action.unwrap();
+        self.print_debug(best, &res);
         res
+    }
+
+    fn print_debug(&self, best: usize, mv: &Move) {
+        if self.debug {
+            println!("len: {} best: {}", self.get(0).children.len(), best);
+            let mut score = vec![];
+            let mut moves = vec![];
+            for x in self.get(0).children.iter() {
+                println!("candidte move: {:?}", self.get(*x).action);
+                moves.push(self.tree.nodes[*x].action.unwrap());
+                score.push(vec![
+                    self.get(*x).win_count as usize,
+                    self.get(*x).loss_count as usize,
+                ]);
+            }
+            println!("best move: {:?}", mv);
+            self.tree.nodes[best].state.print_debug(&moves, &score, &mv);
+            println!("win: {}", self.tree.nodes[best].win_count);
+            println!("loss: {}", self.tree.nodes[best].loss_count);
+            println!("visited: {}", self.tree.nodes[best].visited_count);
+        }
     }
 }
 
