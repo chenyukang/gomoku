@@ -396,7 +396,7 @@ impl Board {
                 }
                 max_score = std::cmp::max(max_score, score);
                 max_oppo = std::cmp::max(max_oppo, oppo_score);
-                if oppo_score >= 5000 && score <= 2000 {
+                if oppo_score >= 2000 && score < 2000 {
                     score = oppo_score;
                 }
                 self.place(i, j, 0);
@@ -416,7 +416,20 @@ impl Board {
                 b.original_score.cmp(&a.original_score)
             }
         });
-        moves
+        let mut len = std::cmp::min(8, moves.len());
+        if max_oppo >= 5000 && max_score < 5000 {
+            len = 1;
+            /*  for i in 1..moves.len() {
+                if moves[i].score == moves[i - 1].score
+                    && moves[i].original_score == moves[i - 1].original_score
+                {
+                    len += 1;
+                } else {
+                    break;
+                }
+            } */
+        }
+        moves.drain(..len).collect()
     }
 
     pub fn gen_ordered_moves(&mut self, player: u8) -> Vec<Move> {
