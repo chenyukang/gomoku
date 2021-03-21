@@ -1,7 +1,7 @@
 #![allow(dead_code)]
+use super::algo::*;
 use super::board::*;
 use super::utils::*;
-use super::algo::*;
 
 #[cfg(feature = "random")]
 use rand::Rng;
@@ -162,7 +162,6 @@ impl Tree {
     }
 }
 
-
 impl Node {
     pub fn new(index: Id, parent: Id, state: Board, player: u8, mv: Option<Move>) -> Self {
         let mut s = Node {
@@ -290,7 +289,6 @@ impl GomokuSolver for MonteCarlo {
         monte.search_move()
     }
 }
-
 
 #[cfg(test)]
 mod tests {
