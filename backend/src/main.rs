@@ -1,13 +1,13 @@
 use clap::clap_app;
 use std::env;
-
-mod algo;
+mod minimax;
 mod board;
 mod control;
 mod monte;
 #[cfg(feature = "server")]
 mod server;
 mod utils;
+mod algo;
 
 fn main() {
     let matches = clap_app!(myapp =>

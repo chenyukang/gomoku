@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 #![warn(unused_variables)]
-use super::algo;
+use super::minimax;
 use super::board::*;
 use super::monte;
 use build_timestamp::build_time;
+use super::algo;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
@@ -41,25 +42,17 @@ pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
           let start = Instant::now();
         }
     };
-    let mut runner = algo::Runner::new(player, 5);
     let mut score = 0;
     let mut row = 0;
     let mut col = 0;
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        if algo_role == 0 {
-            let (s, r, c) = runner.run_heuristic(&mut board, player);
-            score = s;
-            row = r;
-            col = c;
-        } else {
-            let mut monte = monte::MonteCarlo::new(board.clone(), player, 1000);
-            let mv = monte.search_move();
-            row = mv.x;
-            col = mv.y;
-        }
-
+        let algo_ty = if algo_role ==  0 { "minimax" } else { "monte" };
+        let mv = algo::gomoku_solve(input, algo_ty);
+        row = mv.x;
+        col = mv.y;
+        score = mv.score;
         board.place(row, col, player);
         if let Some(w) = board.any_winner() {
             println!("winner: {:?}", winner);
@@ -79,10 +72,10 @@ pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
         result: Body {
             ai_player: player,
             cpu_time: format!("{:?}", duration),
-            eval_count: runner.eval_node,
+            eval_count: 0,
             move_c: col,
             move_r: row,
-            node_count: runner.eval_node,
+            node_count: 0,
             num_threads: 1,
             search_depth: 9,
             winning_player: winner,
@@ -166,7 +159,7 @@ pub fn battle() {
     let opponent = 1;
     let me = 2;
     board.place(7, 7, 1);
-    let mut runner = algo::Runner::new(2, 4);
+    let mut runner = minimax::MiniMax::new(2, 4);
     //println!("board: {}", board.to_string());
     loop {
         let (_, row, col) = runner.run_heuristic(&mut board, me);
@@ -213,7 +206,7 @@ pub fn rev_battle() {
     let opponent = 2;
     let me = 1;
     board.place(7, 7, 1);
-    let mut runner = algo::Runner::new(2, 4);
+    let mut runner = minimax::MiniMax::new(2, 4);
     loop {
         //let args = format!("-s {} -p {}", board.to_string(), opponent);
         let output = Command::new("gomoku")
@@ -261,7 +254,7 @@ pub fn battle_self() {
     let opponent = 2;
     let me = 1;
     board.place(7, 7, 1);
-    let mut runner = algo::Runner::new(2, 4);
+    let mut runner = minimax::MiniMax::new(2, 4);
     //println!("board: {}", board.to_string());
     loop {
         let (_, row, col) = runner.run_heuristic(&mut board, opponent);

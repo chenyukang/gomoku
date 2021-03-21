@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use super::board::*;
 use super::utils::*;
+use super::algo::*;
+
 #[cfg(feature = "random")]
 use rand::Rng;
 use std::env;
@@ -160,6 +162,7 @@ impl Tree {
     }
 }
 
+
 impl Node {
     pub fn new(index: Id, parent: Id, state: Board, player: u8, mv: Option<Move>) -> Self {
         let mut s = Node {
@@ -278,6 +281,16 @@ impl MonteCarlo {
         }
     }
 }
+
+impl GomokuSolver for MonteCarlo {
+    fn best_move(input: &str) -> Move {
+        let board = Board::new(input.to_string(), 15, 15);
+        let player = board.next_player();
+        let mut monte = MonteCarlo::new(board, player, 2000);
+        monte.search_move()
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

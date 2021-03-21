@@ -1,11 +1,12 @@
 // The wasm-pack uses wasm-bindgen to build and generate JavaScript binding file.
 // Import the wasm-bindgen crate.
 use wasm_bindgen::prelude::*;
-mod algo;
-pub mod board;
 mod control;
-pub mod monte;
 mod utils;
+pub mod minimax;
+pub mod board;
+pub mod monte;
+pub mod algo;
 
 #[wasm_bindgen]
 pub fn gomoku_solve(input: String, player: i32) -> String {
