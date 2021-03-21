@@ -1,3 +1,4 @@
+
 extern crate gomoku;
 use glob::glob;
 use gomoku::*;
@@ -10,11 +11,11 @@ fn run_from_data_dir() {
             Ok(path) => {
                 let input = String::from(path.to_str().unwrap());
                 println!("Running Board Input: {}", input);
-                let mut board = board::Board::new(fs::read_to_string(path).unwrap(), 15, 15);
+                let content = fs::read_to_string(path).unwrap();
+                let mut board = board::Board::new(content.clone(), 15, 15);
                 board.print();
                 let player = board.next_player();
-                let mut monte = monte::MonteCarlo::new(board.clone(), player, 2000);
-                let mv = monte.search_move();
+                let mv = algo::gomoku_solve(content.as_str(), "monte");
                 println!("move: {:?}", mv);
                 let row = mv.x;
                 let col = mv.y;

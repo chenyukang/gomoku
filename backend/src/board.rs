@@ -110,6 +110,7 @@ impl Board {
             .filter(|&e| e == '0' || e == '1' || e == '2')
             .map(|e| e as u8 - '0' as u8)
             .collect();
+        
         if rows.len() != width * height {
             panic!(
                 "Invalid board size with {}*{} <> {}",

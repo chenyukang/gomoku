@@ -66,40 +66,6 @@ impl MiniMax {
         (max_score, move_x, move_y)
     }
 
-    // 3 -->              -
-    //     2 -->          +
-    //          1 -->     -
-    //              0 --> +
-    pub fn gen_move_negamax(
-        &mut self,
-        board: &mut Board,
-        player: u8,
-        depth: i32,
-    ) -> (i32, usize, usize) {
-        self.eval_node += 1;
-        let mut max_score = std::i32::MIN / 2;
-        let mut move_x = 0;
-        let mut move_y = 0;
-        //println!("gen_move: {} {}", player, depth);
-        for i in 0..board.height {
-            for j in 0..board.width {
-                if board.get(i as i32, j as i32) != Some(0) || board.is_remote_cell(i, j) {
-                    continue;
-                }
-                board.place(i, j, player);
-                let (score, _, _) = self.gen_move_negamax(board, cfg::opponent(player), depth - 1);
-                let score = -score;
-                if score > max_score {
-                    max_score = score;
-                    move_x = i;
-                    move_y = j;
-                }
-                board.place(i, j, 0);
-            }
-        }
-        (max_score, move_x, move_y)
-    }
-
     pub fn run_heuristic(&mut self, board: &mut Board, player: u8) -> (i32, usize, usize) {
         self.gen_move_heuristic(
             board,
