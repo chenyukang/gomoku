@@ -242,13 +242,15 @@ impl MonteCarlo {
     pub fn search_move(&mut self) -> Move {
         for i in 0..self.simulate_count {
             let v = self.tree_policy();
-            if i % 100 == 0 {
-                println!(
-                    "%{:.2} {} : rollout {}",
-                    (i as f32 * 100.0) / self.simulate_count as f32,
-                    v,
-                    self.tree.nodes.len()
-                );
+            if self.debug {
+                if i % 100 == 0 {
+                    println!(
+                        "%{:.2} {} : rollout {}",
+                        (i as f32 * 100.0) / self.simulate_count as f32,
+                        v,
+                        self.tree.nodes.len()
+                    );
+                }
             }
             let r = self.tree.rollout(v);
             self.tree.backpropagete(v, r);

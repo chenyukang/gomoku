@@ -1,7 +1,7 @@
 #![allow(dead_code)]
-use crate::algo::GomokuSolver;
 use super::board::*;
 use super::utils::*;
+use crate::algo::GomokuSolver;
 use std::cmp::*;
 use std::env;
 
@@ -94,9 +94,6 @@ impl MiniMax {
         let mut block_move = None;
         let mut best_moves: Vec<Move> = vec![];
         let mut candidates = board.gen_ordered_moves(player);
-        if depth == self.depth {
-            println!("len: {}", candidates.len());
-        }
         if candidates.len() == 0 {
             return (0, 0, 0);
         }
@@ -158,7 +155,7 @@ impl MiniMax {
             );
         }
         if depth == self.depth && block_move.is_some() && block_move.unwrap().is_dead_move() {
-            println!("Use block move: {:?}", block_move);
+            //println!("Use block move: {:?}", block_move);
             final_move = *block_move.unwrap();
             max_score = final_move.score;
             println!(
@@ -170,20 +167,13 @@ impl MiniMax {
             best_moves.sort_by(|a, b| b.original_score.cmp(&a.original_score));
             final_move = *(best_moves.first().unwrap());
         }
-        let mut prev = String::from("");
-        for _ in 0..(self.depth - depth) {
-            prev += "---";
-        }
-        if depth == self.depth {
+        if depth == self.depth && self.debug {
             println!(
                 "Final move: {:?} depth:{} self.depth:{}, max_score: {}",
                 final_move, depth, self.depth, max_score
             );
         }
-        /* println!(
-            "{}Player: {} depth:{} -> Final move: {} {:?}",
-            prev, player, depth, max_score, final_move
-        ); */
+
         (max_score, final_move.x, final_move.y)
     }
 }
