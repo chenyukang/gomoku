@@ -1,4 +1,3 @@
-
 extern crate gomoku;
 use glob::glob;
 use gomoku::*;
@@ -15,7 +14,7 @@ fn run_from_data_dir() {
                 let mut board = board::Board::new(content.clone(), 15, 15);
                 board.print();
                 let player = board.next_player();
-                let mv = algo::gomoku_solve(content.as_str(), "monte");
+                let mv = algo::gomoku_solve(content.as_str(), "monte_carlo");
                 println!("move: {:?}", mv);
                 let row = mv.x;
                 let col = mv.y;

@@ -9,8 +9,8 @@ use warp::{
 
 #[derive(Deserialize, Serialize)]
 struct ReqObject {
-    s: String,
-    p: u8,
+    state: String,
+    algo_type: String,
 }
 
 #[tokio::main]
@@ -25,15 +25,14 @@ pub async fn run_server(port: u16) {
         .and(opt_query)
         .map(|p: Option<ReqObject>| match p {
             Some(obj) => {
-                println!("player: {}", obj.p);
                 for i in 0..15 {
                     for j in 0..15 {
                         let c = (i * 15 + j) as usize;
-                        print!("{}", obj.s.chars().nth(c).unwrap());
+                        print!("{}", obj.state.chars().nth(c).unwrap());
                     }
                     println!();
                 }
-                let result = control::solve_it((obj.s).as_str(), obj.p, 1);
+                let result = control::solve_it(&obj.state, &obj.algo_type);
                 Response::builder()
                     .header("Access-Control-Allow-Origin", "*")
                     .body(result)

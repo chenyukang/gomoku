@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 #![warn(unused_variables)]
-use super::minimax;
+use super::algo;
 use super::board::*;
+use super::minimax;
 use super::monte;
 use build_timestamp::build_time;
-use super::algo;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
@@ -34,8 +34,9 @@ struct Message {
     result: Body,
 }
 
-pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
+pub fn solve_it(input: &str, algo_type: &str) -> String {
     let mut board = Board::from(input.to_string());
+    let player = board.next_player();
     let mut winner = 0;
     cfg_if::cfg_if! {
         if #[cfg(feature = "server")] {
@@ -48,8 +49,7 @@ pub fn solve_it(input: &str, player: u8, algo_role: u8) -> String {
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let algo_ty = if algo_role ==  0 { "minimax" } else { "monte" };
-        let mv = algo::gomoku_solve(input, algo_ty);
+        let mv = algo::gomoku_solve(input, algo_type);
         row = mv.x;
         col = mv.y;
         score = mv.score;

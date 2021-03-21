@@ -43,6 +43,7 @@
         </div>
         <!-- Status -->
         <div class="col-md-3">
+
           <div class="panel panel-default">
             <div class="panel-heading">
               <h3 class="panel-title">Game Status
@@ -51,6 +52,27 @@
             </div>
             <div id="panel_status" class="panel-body"></div>
           </div>
+
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">AI Algorithm     
+            </div>
+            <div id="panel_status" class="panel-body">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="algo_type" id="algo_monte_carlo" onclick="setAlgoType()"  checked>
+                <label class="form-check-label" for="algo_monte_carlo">
+                  Monte Carlo
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="algo_type" id="algo_minimax" onclick="setAlgoType()">
+                <label class="form-check-label" for="algo_minimax">
+                  MiniMax
+                </label>
+              </div>
+            </div>
+          </div>
+
 
           <div class="panel panel-default">
             <div class="panel-heading"><h3 class="panel-title">Game Control</h3></div>
@@ -99,6 +121,8 @@
     // Bind elements
     var tbl_board = document.getElementById('tbl_board');
     var div_gamearea = document.getElementById('div_gamearea');
+    var monte_carlo = document.getElementById('algo_monte_carlo');
+    var minimax = document.getElementById('algo_minimax');
     var btn_restart = $('#btn_restart');
     var btn_undo = $('#btn_undo');
     var p_ai = $('#p_ai');    // Progress bar
@@ -111,6 +135,7 @@
     var human_player, ai_player;
     var move_log;
     var undo_remaining;
+    var algo_type = 'monte_carlo';
 
     // Randomly select first player
     human_player = 1;
@@ -219,6 +244,15 @@
         human_player = 1;
       }
       init(human_player);
+    }
+
+    function setAlgoType() {
+      if (minimax.checked) {
+        algo_type = "minimax";
+      } else {
+        algo_type = "monte_carlo";
+      }
+      console.log(algo_type);
     }
 
     function undoMove() {
@@ -355,7 +389,7 @@
       addPiece(r, c, human_player);
 
       // Send game status
-      sendGameStatus(current_board, ai_player);
+      sendGameStatus(current_board);
     }
 
     // Generates an HTML string of player colors
@@ -368,8 +402,8 @@
     }
 
     // Sends status to backend
-    function sendGameStatus(board, ai_player) {
-      var req_url = api_base_url + '/api/move?s=' + board + '&p=' + ai_player;
+    function sendGameStatus(board) {
+      var req_url = api_base_url + '/api/move?state=' + board + '&algo_type=' + algo_type;
 
       $.get(req_url, function(data) {
         processResponse(data);
