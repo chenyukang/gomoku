@@ -622,42 +622,4 @@ mod tests {
         println!("{:?}", mv);
         assert!(row == 7 && col == 8);
     }
-
-    #[test]
-    fn test_monte_block_block_three_error() {
-        let mut board = Board::new(
-            String::from(
-                "000000000000000
-                000000000000000
-                000000000000000
-                000000000000000
-                000200000000000
-                000010000000000
-                000011000000000
-                000002111000000
-                000000212000000
-                000000122000000
-                000000022000000
-                000000002100000
-                000000001000000
-                000000000000000
-                000000000000000",
-            ),
-            15,
-            15,
-        );
-        board.print();
-        let player = 2;
-        let mut monte = MonteCarlo::new(board.clone(), player, 2000);
-        let mv = monte.search_move();
-        println!("left: {}", monte.tree.nodes[1].untried_moves.len());
-        println!("move: {:?}", mv);
-        assert_eq!(monte.tree.nodes[0].is_fully_expanded(), true);
-        let row = mv.x;
-        let col = mv.y;
-        board.place(row, col, player);
-        board.print();
-        println!("{:?}", mv);
-        assert!(row == 6 && col == 9);
-    }
 }
