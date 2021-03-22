@@ -1,1 +1,2 @@
-cargo build --release --features "server" ; ./target/release/gomoku -s
+cargo build --release --features "server" ; GOMOKU_DEBUG=1 ./target/release/gomoku -s
+
