@@ -106,7 +106,12 @@ impl Tree {
     pub fn rollout(&mut self, index: Id) -> Option<u8> {
         let mut current_state = self.nodes[index].state.clone();
         let mut player = self.nodes[index].player;
+        let mut count = 0;
         loop {
+            count += 1;
+            if count >= 10 {
+                return None;
+            }
             let moves = current_state.gen_ordered_moves_all(player);
             let rollout_move = self.rollout_policy(&moves);
             if rollout_move.is_none() {
@@ -287,7 +292,7 @@ impl GomokuSolver for MonteCarlo {
     fn best_move(input: &str) -> Move {
         let board = Board::new(input.to_string(), 15, 15);
         let player = board.next_player();
-        let mut monte = MonteCarlo::new(board, player, 2000);
+        let mut monte = MonteCarlo::new(board, player, 3000);
         monte.search_move()
     }
 }

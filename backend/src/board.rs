@@ -400,6 +400,7 @@ impl Board {
         let mut win_step = -1;
         let mut lose_step = -1;
         let mut max_oppo = 0;
+        let mut undefended_step = -1;
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
                 if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
@@ -411,10 +412,13 @@ impl Board {
                 let oppo_score = self.eval_pos(cfg::opponent(player), i, j) as i32;
                 if score >= 100000 {
                     win_step = moves.len() as i32;
+                } else if score >= 5000 {
+                    undefended_step = moves.len() as i32;
                 }
                 if oppo_score >= 100000 {
                     lose_step = moves.len() as i32;
                 }
+
                 max_score = std::cmp::max(max_score, score);
                 max_oppo = std::cmp::max(max_oppo, oppo_score);
                 if oppo_score >= 2000 && score < 2000 {
@@ -430,6 +434,10 @@ impl Board {
         if lose_step != -1 {
             return vec![moves[lose_step as usize]];
         }
+        // win step
+        if undefended_step != -1 && max_oppo < 5000 {
+            return vec![moves[undefended_step as usize]];
+        }
         moves.sort_by(|a, b| {
             if a.score != b.score {
                 b.score.cmp(&a.score)
@@ -439,7 +447,7 @@ impl Board {
         });
         let mut len = std::cmp::min(8, moves.len());
         if max_oppo >= 5000 && max_score < 5000 {
-            len = 2;
+            len = 3;
             /*  for i in 1..moves.len() {
                 if moves[i].score == moves[i - 1].score
                     && moves[i].original_score == moves[i - 1].original_score
