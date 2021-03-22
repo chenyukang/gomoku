@@ -4,10 +4,9 @@ use gomoku::*;
 use std::env;
 use std::fs;
 
-#[test]
-fn run_from_data_dir() {
+fn run_from_data_dir(data_dir: &str, algo_type: &str) {
     let specify_test = env::var("ALGO_TEST").unwrap_or_default();
-    for entry in glob("tests/data/**/*.in").expect("expect board input") {
+    for entry in glob(data_dir).expect("expect board input") {
         match entry {
             Ok(path) => {
                 let input = String::from(path.to_str().unwrap());
@@ -19,7 +18,7 @@ fn run_from_data_dir() {
                 let mut board = board::Board::new(content.clone(), 15, 15);
                 board.print();
                 let player = board.next_player();
-                let mv = algo::gomoku_solve(content.as_str(), "monte_carlo");
+                let mv = algo::gomoku_solve(content.as_str(), algo_type);
                 println!("move: {:?}", mv);
                 let row = mv.x;
                 let col = mv.y;
@@ -39,4 +38,14 @@ fn run_from_data_dir() {
             Err(e) => println!("error:  {:?}", e),
         }
     }
+}
+
+#[test]
+fn run_monte() {
+    run_from_data_dir("tests/data/**/*.in", "monte_carlo");
+}
+
+#[test]
+fn run_minimax() {
+    run_from_data_dir("tests/minimax_data/**/*.in", "minimax");
 }
