@@ -73,6 +73,33 @@
             </div>
           </div>
 
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Backend
+            </div>
+            <div id="panel_status" class="panel-body">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="backend_type" id="backend_localhost" onclick="setBackendType()" checked>
+                <label class="form-check-label" for="backend_localhost">
+                  Local Host
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="backend_type" id="backend_wasm" onclick="setBackendType()">
+                <label class="form-check-label" for="backend_wasm">
+                  WASM
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="backend_type" id="algbackend_azure" onclick="setBackendType()">
+                <label class="form-check-label" for="backend_azure">
+                  Azure Function
+                </label>
+              </div>
+
+            </div>
+          </div>
+
 
           <div class="panel panel-default">
             <div class="panel-heading"><h3 class="panel-title">Game Control</h3></div>
@@ -97,8 +124,9 @@
     // Script: Game display control, input and message
     // Configurations
     var api_base_url = 'http://localhost:3000';
+    var azure_url = "https://gomoku-app.azurewebsites.net"
     if (window.location.href.toString().indexOf("azurestaticapps.net") != -1) {
-      api_base_url = 'https://gomoku-app.azurewebsites.net';
+      api_base_url = azure_url;
     } else {
       console.log("will use local host ....")
     }
@@ -123,6 +151,8 @@
     var div_gamearea = document.getElementById('div_gamearea');
     var monte_carlo = document.getElementById('algo_monte_carlo');
     var minimax = document.getElementById('algo_minimax');
+    var backend_localhost = document.getElementById('backend_localhost');
+    var backend_wasm = document.getElementById('backend_wasm');
     var btn_restart = $('#btn_restart');
     var btn_undo = $('#btn_undo');
     var p_ai = $('#p_ai');    // Progress bar
@@ -136,6 +166,13 @@
     var move_log;
     var undo_remaining;
     var algo_type = 'monte_carlo';
+    var backend_type = 'localhost';
+
+    var wasmWorker = new Worker('worker.js', { type: "module" } );
+
+    wasmWorker.onmessage = function(result) {
+      processResponse(result.data);
+    }
 
     // Randomly select first player
     human_player = 1;
@@ -253,6 +290,18 @@
         algo_type = "monte_carlo";
       }
       console.log(algo_type);
+    }
+
+    function setBackendType() {
+      if (backend_localhost.checked) {
+        backend_type = "backend_localhost";
+        api_base_url = "http://localhost:3000";
+      } else if (backend_wasm.checked) {
+        backend_type = "backend_wasm";
+      } else {
+        backend_type = "backend_azure";
+        api_base_url = azure_url;
+      }
     }
 
     function undoMove() {
@@ -389,7 +438,12 @@
       addPiece(r, c, human_player);
 
       // Send game status
-      sendGameStatus(current_board);
+      if (backend_type != "backend_wasm") {
+        sendGameStatus(current_board);
+      } else {
+        // Send game status
+      wasmWorker.postMessage([current_board, algo_type]);
+      }
     }
 
     // Generates an HTML string of player colors

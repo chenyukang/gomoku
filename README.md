@@ -13,17 +13,20 @@ cd backend
 cargo build --release --features "server"
 ./target/release/gomoku -s  //start server listen to http://localhost:3000
 
-// open client/index.html in browser and have fun.
 ```
+Open client/index.html in browser and have fun.
 
 ### Build WASM backend
 
-cargo install wasm-pack
 ```sh
+cargo install wasm-bindgen-cli wasm-pack
 ./wasm.sh
-// open wasm-client/index.html in brwoser and have fun
 ```
 
 # [Demo](https://lemon-hill-0c2cac210.azurestaticapps.net/)
 
 ![demo](./client/assets/gomoku_demo.png)
+
+### Credits
+
+Thanks Yunzhu.Li for initial version of [Client](https://github.com/yunzhu-li/blupig-gomoku).

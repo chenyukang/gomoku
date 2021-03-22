@@ -2,16 +2,16 @@
 /* eslint-disable */
 /**
 * @param {string} input
-* @param {number} player
+* @param {string} algo_type
 * @returns {string}
 */
-export function gomoku_solve(input: string, player: number): string;
+export function gomoku_solve(input: string, algo_type: string): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly gomoku_solve: (a: number, b: number, c: number, d: number) => void;
+  readonly gomoku_solve: (a: number, b: number, c: number, d: number, e: number) => void;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_malloc: (a: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number) => number;

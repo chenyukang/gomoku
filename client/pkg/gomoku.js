@@ -81,15 +81,17 @@ function getStringFromWasm0(ptr, len) {
 }
 /**
 * @param {string} input
-* @param {number} player
+* @param {string} algo_type
 * @returns {string}
 */
-export function gomoku_solve(input, player) {
+export function gomoku_solve(input, algo_type) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         var len0 = WASM_VECTOR_LEN;
-        wasm.gomoku_solve(retptr, ptr0, len0, player);
+        var ptr1 = passStringToWasm0(algo_type, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len1 = WASM_VECTOR_LEN;
+        wasm.gomoku_solve(retptr, ptr0, len0, ptr1, len1);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         return getStringFromWasm0(r0, r1);

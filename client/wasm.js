@@ -9,11 +9,11 @@ import wasmInit, {
   
   wasmInit("./pkg/gomoku_bg.wasm");
 
-  export function solve_with_api(input, player) {
+  export function solve_with_api(input, algo_type) {
     // Instantiate our wasm module
 
     // Call our exported function
-    const result = gomoku_solve(input, player);
+    const result = gomoku_solve(input, algo_type);
 
     // Log the result to the console
     //console.log(result);
