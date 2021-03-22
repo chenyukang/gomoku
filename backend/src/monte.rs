@@ -171,9 +171,9 @@ impl Node {
             state: state.clone(),
             untried_moves: vec![],
             children: vec![],
-            player: player,
-            parent: parent,
-            index: index,
+            player,
+            parent,
+            index,
             action: mv,
         };
 
@@ -212,7 +212,7 @@ impl MonteCarlo {
     pub fn new(state: Board, player: u8, simulate_count: u32) -> Self {
         let mut s = Self {
             tree: Tree::new(),
-            simulate_count: simulate_count,
+            simulate_count,
             debug: match env::var("GOMOKU_DEBUG") {
                 Ok(_) => true,
                 _ => false,

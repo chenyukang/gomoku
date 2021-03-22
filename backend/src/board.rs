@@ -13,9 +13,9 @@ struct Line {
 impl Line {
     pub fn new(count: u32, space_count: u32, open_count: u32) -> Self {
         Self {
-            count: count,
-            space_count: space_count,
-            open_count: open_count,
+            count,
+            space_count,
+            open_count,
         }
     }
 
@@ -110,7 +110,7 @@ impl Board {
             .filter(|&e| e == '0' || e == '1' || e == '2')
             .map(|e| e as u8 - '0' as u8)
             .collect();
-        
+
         if rows.len() != width * height {
             panic!(
                 "Invalid board size with {}*{} <> {}",
@@ -123,8 +123,8 @@ impl Board {
             panic!("Width or height must larger than")
         }
         Self {
-            width: width,
-            height: height,
+            width,
+            height,
             cells: rows.chunks(width).map(|x| x.to_vec()).collect(),
             at_x: -1,
             at_y: -1,
@@ -439,7 +439,7 @@ impl Board {
         });
         let mut len = std::cmp::min(8, moves.len());
         if max_oppo >= 5000 && max_score < 5000 {
-            len = 1;
+            len = 2;
             /*  for i in 1..moves.len() {
                 if moves[i].score == moves[i - 1].score
                     && moves[i].original_score == moves[i - 1].original_score

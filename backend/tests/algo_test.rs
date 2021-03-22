@@ -1,14 +1,19 @@
 extern crate gomoku;
 use glob::glob;
 use gomoku::*;
+use std::env;
 use std::fs;
 
 #[test]
 fn run_from_data_dir() {
+    let specify_test = env::var("ALGO_TEST").unwrap_or_default();
     for entry in glob("tests/data/**/*.in").expect("expect board input") {
         match entry {
             Ok(path) => {
                 let input = String::from(path.to_str().unwrap());
+                if specify_test.len() > 0 && input != specify_test {
+                    continue;
+                }
                 println!("Running Board Input: {}", input);
                 let content = fs::read_to_string(path).unwrap();
                 let mut board = board::Board::new(content.clone(), 15, 15);
