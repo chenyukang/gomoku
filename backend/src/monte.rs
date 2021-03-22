@@ -358,7 +358,7 @@ mod tests {
         assert_eq!(root.get_node(0).unwrap().player, 2);
 
         let res = root.rollout(0);
-        assert_eq!(res.is_some(), true);
+        assert_eq!(res.is_some(), false);
     }
 
     #[test]
