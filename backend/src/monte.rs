@@ -109,7 +109,7 @@ impl Tree {
         let mut count = 0;
         loop {
             count += 1;
-            if count >= 10 {
+            if count >= 20 {
                 return None;
             }
             let moves = current_state.gen_ordered_moves_all(player);
@@ -260,7 +260,7 @@ impl MonteCarlo {
             let r = self.tree.rollout(v);
             self.tree.backpropagete(v, r);
         }
-        let best = self.tree.best_child(0);
+        let best = self.tree.best_move(0);
         let res = self.get(best).action.unwrap();
         self.print_debug(best, &res);
         res

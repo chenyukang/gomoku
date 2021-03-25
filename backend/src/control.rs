@@ -284,9 +284,7 @@ pub fn battle_monte() {
     board.place(7, 7, 1);
     //println!("board: {}", board.to_string());
     loop {
-        //let (_, row, col) = runner.run_heuristic(&mut board, opponent);
-        //println!("o row: {:?} col: {:?}", row, col);
-        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 4000);
+        let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 3000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
@@ -297,12 +295,11 @@ pub fn battle_monte() {
             break;
         }
 
-        let mut monte = monte::MonteCarlo::new(board.clone(), me, 4000);
+        let mut monte = monte::MonteCarlo::new(board.clone(), me, 3000);
         let mv = monte.search_move();
         let row = mv.x;
         let col = mv.y;
-        //let (_, row, col) = runner.run_heuristic(&mut board, me);
-        println!("+ row: {:?} col: {:?}", row, col);
+        println!("++ row: {:?} col: {:?}", row, col);
         board.place(row, col, me);
         board.print();
         if let Some(w) = board.any_winner() {

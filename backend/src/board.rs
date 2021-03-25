@@ -422,6 +422,7 @@ impl Board {
                 max_score = std::cmp::max(max_score, score);
                 max_oppo = std::cmp::max(max_oppo, oppo_score);
                 if oppo_score >= 2000 && score < 2000 {
+                    //transfer to defense move
                     score = oppo_score;
                 }
                 self.place(i, j, 0);
@@ -448,15 +449,15 @@ impl Board {
         let mut len = std::cmp::min(8, moves.len());
         if max_oppo >= 5000 && max_score < 5000 {
             len = 3;
-            /*  for i in 1..moves.len() {
-                if moves[i].score == moves[i - 1].score
-                    && moves[i].original_score == moves[i - 1].original_score
-                {
-                    len += 1;
+            /*  let mut k = 0;
+            for i in 0..moves.len() {
+                if moves[i].original_score >= 5000 {
+                    k += 1;
                 } else {
                     break;
                 }
-            } */
+            }
+            len = k; */
         }
         moves.drain(..len).collect()
     }
