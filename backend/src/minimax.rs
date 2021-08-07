@@ -46,6 +46,7 @@ impl MiniMax {
         let mut max_score = std::i32::MIN;
         let mut move_x = 0;
         let mut move_y = 0;
+
         //println!("gen_move: {} {}", player, depth);
         for i in 0..board.height {
             for j in 0..board.width {
