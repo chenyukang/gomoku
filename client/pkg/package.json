@@ -11,5 +11,7 @@
   ],
   "module": "gomoku.js",
   "types": "gomoku.d.ts",
-  "sideEffects": false
+  "sideEffects": [
+    "./snippets/*"
+  ]
 }
