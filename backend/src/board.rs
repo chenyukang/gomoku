@@ -394,6 +394,15 @@ impl Board {
             }
         }
 
+        // 如果是空棋盘，从中心区域开始
+        let is_empty_board = row_min == self.height;
+        if is_empty_board {
+            row_min = self.height / 2 - 1;
+            row_max = self.height / 2 + 1;
+            col_min = self.width / 2 - 1;
+            col_max = self.width / 2 + 1;
+        }
+
         //let mut blocks = vec![];
         let mut max_score = 0;
         let mut win_step = -1;
@@ -402,7 +411,10 @@ impl Board {
         let mut undefended_step = -1;
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
-                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
+                // 对于空棋盘，不检查 is_remote_cell
+                if self.get(i as i32, j as i32) != Some(0)
+                    || (!is_empty_board && self.is_remote_cell(i, j))
+                {
                     continue;
                 }
                 self.place(i, j, player);
@@ -479,9 +491,21 @@ impl Board {
             }
         }
 
+        // 如果是空棋盘，从中心区域开始
+        let is_empty_board = row_min == self.height;
+        if is_empty_board {
+            row_min = self.height / 2 - 1;
+            row_max = self.height / 2 + 1;
+            col_min = self.width / 2 - 1;
+            col_max = self.width / 2 + 1;
+        }
+
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
-                if self.get(i as i32, j as i32) != Some(0) || self.is_remote_cell(i, j) {
+                // 对于空棋盘，不检查 is_remote_cell
+                if self.get(i as i32, j as i32) != Some(0)
+                    || (!is_empty_board && self.is_remote_cell(i, j))
+                {
                     continue;
                 }
                 self.place(i, j, player);

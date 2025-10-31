@@ -5,12 +5,17 @@ authors = ["chenyukang <moorekang@gmail.com>"]
 edition = "2018"
 
 [features]
+default = ["random"]
 server = ["warp", "tokio"]
 random = ["rand"]
 
 [[bin]]
 name = "gomoku"
 path = "src/main.rs"
+
+[[bin]]
+name = "ml_trainer"
+path = "src/bin/ml_trainer.rs"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -32,6 +37,7 @@ url = "2.2.0"
 serde_json = "1.0"
 build_timestamp = "0.1.0"
 serde = { version = "1", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"]}
 
