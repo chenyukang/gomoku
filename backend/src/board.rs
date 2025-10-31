@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use yansi::Color;
+
 use super::utils::*;
 use std::cmp::*;
 
@@ -340,6 +342,19 @@ impl Board {
         }
     }
 
+    /// 获取棋盘上已下的棋子总数
+    pub fn total_moves(&self) -> usize {
+        let mut count = 0;
+        for row in &self.cells {
+            for &cell in row {
+                if cell != 0 {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
+
     pub fn is_remote_cell(&self, row: usize, col: usize) -> bool {
         let dirs = cfg::ALL_DIRS;
         for d in 1..3 {
@@ -521,26 +536,61 @@ impl Board {
     pub fn print(&self) {
         use yansi::Paint;
 
+        // 打印列标
+        print!("    ");
+        for j in 0..self.width {
+            print!("{:X} ", j);
+        }
+        println!();
+
         for i in 0..self.height {
-            let mut res = "".to_string();
+            // 打印行标
+            print!("  {:X} ", i);
+
             for j in 0..self.width {
                 let last_placed = i == self.at_x as usize && j == self.at_y as usize;
-                let cell = match self.cells[i][j] {
-                    1 => Paint::green(if last_placed { " O" } else { " o" }),
-                    2 => Paint::red(if last_placed { " X" } else { " +" }),
-                    _ => Paint::white(" ."),
-                };
-                res += format!("{}", cell).as_str();
+
+                match self.cells[i][j] {
+                    1 => {
+                        // 黑子 - 用 X (青色)
+                        if last_placed {
+                            print!("{} ", Paint::cyan("X").bg(Color::Red));
+                        } else {
+                            print!("{} ", Paint::cyan("X"));
+                        }
+                    }
+                    2 => {
+                        // 白子 - 用 O (黄色)
+                        if last_placed {
+                            print!("{} ", Paint::yellow("O").bg(Color::Red));
+                        } else {
+                            print!("{} ", Paint::yellow("O"));
+                        }
+                    }
+                    _ => {
+                        // 空位
+                        print!("· ");
+                    }
+                }
             }
-            println!("{}", res.as_str());
+            println!();
         }
     }
 
     pub fn print_debug(&self, moves: &Vec<Move>, score: &Vec<Vec<usize>>, best: &Move) {
         use yansi::Paint;
 
+        // 打印列标
+        print!("      ");
+        for j in 0..self.width {
+            print!("{: ^6}", format!("{:X}", j));
+        }
+        println!();
+
         for i in 0..self.height {
-            let mut res = "".to_string();
+            // 打印行标
+            print!("  {:X}  ", i);
+
             for j in 0..self.width {
                 let mut found = moves.len();
                 for k in 0..moves.len() {
@@ -552,25 +602,28 @@ impl Board {
                 if found != moves.len() {
                     let w = score[found][0];
                     let l = score[found][1];
-                    //let r = format!("{:.1}", w as f32 * 100.0 / (w + l) as f32);
                     let r = format!("{}/{}", w, l);
                     if i == best.x && j == best.y {
-                        res += format!("{: ^6}", Paint::yellow(r)).as_str();
+                        print!("{: ^6}", Paint::yellow(r));
                     } else {
-                        res += format!("{: ^6}", Paint::blue(r)).as_str();
+                        print!("{: ^6}", Paint::blue(r));
                     }
-                    continue;
                 } else {
                     let last_placed = i == self.at_x as usize && j == self.at_y as usize;
-                    let cell = match self.cells[i][j] {
-                        1 => Paint::green(if last_placed { " O" } else { " o" }),
-                        2 => Paint::red(if last_placed { " X" } else { " +" }),
-                        _ => Paint::white(" ."),
+                    let symbol = match self.cells[i][j] {
+                        1 => "●",
+                        2 => "○",
+                        _ => "·",
                     };
-                    res += format!("{: ^6}", cell).as_str();
+
+                    if last_placed {
+                        print!("{: ^6}", Paint::red(symbol));
+                    } else {
+                        print!("{: ^6}", symbol);
+                    }
                 }
             }
-            println!("{}", res.as_str());
+            println!();
         }
     }
 

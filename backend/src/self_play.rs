@@ -208,7 +208,7 @@ impl SelfPlay {
                     "Move: ({}, {}), Score: {}",
                     best_move.x, best_move.y, best_move.score
                 );
-                self.print_board(&board, Some((best_move.x, best_move.y)));
+                board.print();
             }
 
             // 检查是否有赢家
@@ -325,41 +325,6 @@ impl SelfPlay {
 
             println!("✅ Completed {} games", num_games);
             records
-        }
-    }
-
-    /// 打印棋盘 (简化版)
-    /// last_move: 最后一步的位置 (x, y)，会用红色高亮显示
-    fn print_board(&self, board: &Board, last_move: Option<(usize, usize)>) {
-        use yansi::Paint;
-
-        println!("\n   0 1 2 3 4 5 6 7 8 9 A B C D E");
-        for i in 0..board.height {
-            print!("{:2} ", i);
-            for j in 0..board.width {
-                let is_last_move = last_move.map_or(false, |(x, y)| x == i && y == j);
-
-                let c = match board.get(i as i32, j as i32) {
-                    Some(0) => Paint::white('.'),
-                    Some(1) => {
-                        if is_last_move {
-                            Paint::red('X').bold()
-                        } else {
-                            Paint::cyan('X').bold()
-                        }
-                    }
-                    Some(2) => {
-                        if is_last_move {
-                            Paint::red('O').bold()
-                        } else {
-                            Paint::yellow('O').bold()
-                        }
-                    }
-                    _ => Paint::white('?'),
-                };
-                print!("{} ", c);
-            }
-            println!();
         }
     }
 }
