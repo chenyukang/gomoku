@@ -38,6 +38,7 @@ serde_json = "1.0"
 build_timestamp = "0.1.0"
 serde = { version = "1", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
+rayon = "1.8"
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"]}
 

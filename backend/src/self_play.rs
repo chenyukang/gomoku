@@ -1,6 +1,6 @@
 // 自我对弈模块 - 用于生成训练数据
 use super::algo::gomoku_solve;
-use super::board::{Board, Move};
+use super::board::Board;
 use super::game_record::{GameRecord, GameState};
 
 #[cfg(feature = "random")]
@@ -88,14 +88,19 @@ impl SelfPlay {
     }
 
     /// 运行一局游戏: algo1 vs algo2
-    /// game_index 用于决定：
-    /// - 偶数：algo1 是 Player 1（先手）
-    /// - 奇数：algo2 是 Player 1（先手）
-    pub fn play_game(&self, algo1: &str, algo2: &str, game_index: usize) -> GameRecord {
+    /// opening_positions: 预设的开局位置（可选）
+    /// first_player_is_algo1: true 表示 algo1 先手，false 表示 algo2 先手
+    pub fn play_game_with_opening(
+        &self,
+        algo1: &str,
+        algo2: &str,
+        opening_positions: Option<Vec<(usize, usize)>>,
+        first_player_is_algo1: bool,
+    ) -> GameRecord {
         let mut board = Board::new_default();
 
         // 决定谁是 Player 1（先手）
-        let (player1_algo, player2_algo) = if game_index % 2 == 0 {
+        let (player1_algo, player2_algo) = if first_player_is_algo1 {
             (algo1, algo2)
         } else {
             (algo2, algo1)
@@ -103,8 +108,9 @@ impl SelfPlay {
 
         let mut record = GameRecord::new(player1_algo.to_string(), player2_algo.to_string());
 
-        // 生成随机开局位置（不指定玩家）
-        let opening_positions = self.generate_random_opening_positions();
+        // 使用提供的开局，或生成新的
+        let opening_positions =
+            opening_positions.unwrap_or_else(|| self.generate_random_opening_positions());
 
         if self.verbose && !opening_positions.is_empty() {
             println!("🎲 Random opening positions: {:?}", opening_positions);
@@ -202,7 +208,7 @@ impl SelfPlay {
                     "Move: ({}, {}), Score: {}",
                     best_move.x, best_move.y, best_move.score
                 );
-                self.print_board(&board);
+                self.print_board(&board, Some((best_move.x, best_move.y)));
             }
 
             // 检查是否有赢家
@@ -225,15 +231,19 @@ impl SelfPlay {
         record
     }
 
-    /// 批量自我对弈
-    /// 策略：每个随机开局会被双方各玩一遍（一次先手，一次后手）
+    /// 批量自我对弈（并行版本）
+    /// 策略：
+    /// - 如果有随机开局：每个开局棋形会被双方各玩一遍（一次先手，一次后手）
+    /// - 如果没有随机开局：简单地轮流先手
     pub fn play_multiple_games(
         &self,
         num_games: usize,
         algo1: &str,
         algo2: &str,
     ) -> Vec<GameRecord> {
-        let mut records = Vec::new();
+        use rayon::prelude::*;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
 
         println!("🎮 Starting {} games: {} vs {}", num_games, algo1, algo2);
         if self.random_opening_steps > 0 {
@@ -244,52 +254,108 @@ impl SelfPlay {
         } else {
             println!("   (Alternating first player for fair evaluation)");
         }
+        println!("   🚀 Using parallel execution");
 
-        for i in 0..num_games {
+        let counter = Arc::new(AtomicUsize::new(0));
+
+        if self.random_opening_steps > 0 {
+            // 策略：生成 num_games / 2 个开局棋形，每个棋形玩两局（双方各先手一次）
+            let num_openings = (num_games + 1) / 2;
+
+            // 预生成所有开局
+            let openings: Vec<Vec<(usize, usize)>> = (0..num_openings)
+                .map(|_| self.generate_random_opening_positions())
+                .collect();
+
+            // 构建游戏任务列表：(opening_idx, opening_positions, first_player_is_algo1)
+            let mut tasks = Vec::new();
+            for (opening_idx, opening_positions) in openings.iter().enumerate() {
+                if tasks.len() < num_games {
+                    tasks.push((opening_idx, opening_positions.clone(), true));
+                }
+                if tasks.len() < num_games {
+                    tasks.push((opening_idx, opening_positions.clone(), false));
+                }
+            }
+
+            // 并行执行游戏
+            let records: Vec<GameRecord> = tasks
+                .par_iter()
+                .map(|(_opening_idx, opening_positions, first_player_is_algo1)| {
+                    let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+                    if !self.verbose {
+                        print!("\rProgress: {}/{}", count, num_games);
+                        std::io::Write::flush(&mut std::io::stdout()).ok();
+                    }
+
+                    self.play_game_with_opening(
+                        algo1,
+                        algo2,
+                        Some(opening_positions.clone()),
+                        *first_player_is_algo1,
+                    )
+                })
+                .collect();
+
             if !self.verbose {
-                print!("\rProgress: {}/{}", i + 1, num_games);
-                std::io::Write::flush(&mut std::io::stdout()).ok();
-            } else {
-                println!("\n{}", "=".repeat(60));
-                println!("Game {}/{}", i + 1, num_games);
-                println!("{}", "=".repeat(60));
+                println!(); // 换行
             }
 
-            // 轮流先手：偶数局 algo1 是 Player 1，奇数局 algo2 是 Player 1
-            let (player1, player2) = if i % 2 == 0 {
-                (algo1, algo2)
-            } else {
-                (algo2, algo1)
-            };
+            println!("✅ Completed {} games", num_games);
+            records
+        } else {
+            // 没有随机开局：简单轮流先手，并行执行
+            let records: Vec<GameRecord> = (0..num_games)
+                .into_par_iter()
+                .map(|i| {
+                    let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+                    if !self.verbose {
+                        print!("\rProgress: {}/{}", count, num_games);
+                        std::io::Write::flush(&mut std::io::stdout()).ok();
+                    }
 
-            if self.verbose {
-                println!("Player 1 (first): {}", player1);
-                println!("Player 2 (second): {}", player2);
+                    let first_player_is_algo1 = i % 2 == 0;
+                    self.play_game_with_opening(algo1, algo2, None, first_player_is_algo1)
+                })
+                .collect();
+
+            if !self.verbose {
+                println!(); // 换行
             }
 
-            let record = self.play_game(algo1, algo2, i);
-            records.push(record);
+            println!("✅ Completed {} games", num_games);
+            records
         }
-
-        if !self.verbose {
-            println!(); // 换行
-        }
-
-        println!("✅ Completed {} games", num_games);
-        records
     }
 
     /// 打印棋盘 (简化版)
-    fn print_board(&self, board: &Board) {
+    /// last_move: 最后一步的位置 (x, y)，会用红色高亮显示
+    fn print_board(&self, board: &Board, last_move: Option<(usize, usize)>) {
+        use yansi::Paint;
+
         println!("\n   0 1 2 3 4 5 6 7 8 9 A B C D E");
         for i in 0..board.height {
             print!("{:2} ", i);
             for j in 0..board.width {
+                let is_last_move = last_move.map_or(false, |(x, y)| x == i && y == j);
+
                 let c = match board.get(i as i32, j as i32) {
-                    Some(0) => '.',
-                    Some(1) => 'X',
-                    Some(2) => 'O',
-                    _ => '?',
+                    Some(0) => Paint::white('.'),
+                    Some(1) => {
+                        if is_last_move {
+                            Paint::red('X').bold()
+                        } else {
+                            Paint::cyan('X').bold()
+                        }
+                    }
+                    Some(2) => {
+                        if is_last_move {
+                            Paint::red('O').bold()
+                        } else {
+                            Paint::yellow('O').bold()
+                        }
+                    }
+                    _ => Paint::white('?'),
                 };
                 print!("{} ", c);
             }
@@ -387,7 +453,7 @@ mod tests {
     #[test]
     fn test_self_play() {
         let self_play = SelfPlay::new(100, false);
-        let record = self_play.play_game("minimax", "minimax", 0);
+        let record = self_play.play_game_with_opening("minimax", "minimax", None, true);
         assert!(record.total_steps > 0);
     }
 }
