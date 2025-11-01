@@ -2,6 +2,7 @@
 use yansi::Color;
 
 use super::utils::*;
+use crate::utils::{BOARD_HEIGHT, BOARD_WIDTH};
 use std::cmp::*;
 
 #[derive(Debug)]
@@ -9,50 +10,89 @@ struct Line {
     count: u32,
     space_count: u32,
     open_count: u32,
+    win_len: usize,
 }
 
 impl Line {
-    pub fn new(count: u32, space_count: u32, open_count: u32) -> Self {
+    pub fn new(count: u32, space_count: u32, open_count: u32, win_len: usize) -> Self {
         Self {
             count,
             space_count,
             open_count,
+            win_len,
         }
     }
 
     pub fn is_winner_step(&self) -> bool {
-        self.count >= 5 && self.space_count == 0
+        (self.count as usize) >= self.win_len && self.space_count == 0
     }
 
     pub fn is_non_refutable(&self) -> bool {
-        self.count == 4 && self.space_count == 0 && self.open_count == 2
+        (self.count as usize) == (self.win_len - 1) && self.space_count == 0 && self.open_count == 2
     }
 
     pub fn must_be_blocked(&self) -> bool {
-        match (self.count, self.space_count, self.open_count) {
-            (3, 0, 2) => true,
-            (3, 1, 2) => true,
-            (4, 1, _) => true,
-            (4, 0, v) if v > 0 => true,
-            (_, _, _) => false,
+        let s = self.count as usize;
+        // threat patterns generalized for WIN_LEN
+        if s == self.win_len - 2 && self.space_count == 0 && self.open_count == 2 {
+            return true;
         }
+        if s == self.win_len - 2 && self.space_count == 1 && self.open_count == 2 {
+            return true;
+        }
+        if s == self.win_len - 1 && self.space_count == 1 {
+            return true;
+        }
+        if s == self.win_len - 1 && self.space_count == 0 && self.open_count > 0 {
+            return true;
+        }
+        false
     }
 
     pub fn score(&self) -> u32 {
-        match (self.count, self.space_count, self.open_count) {
-            (v, 0, _) if v >= 5 => 11000,
-            (v, 1, _) if v >= 5 => 2000,
-            (4, 0, 2) => 10000,
-            (3, 0, 2) => 50,
-            (4, 0, 1) => 50,
-            (4, 1, 1) => 30,
-            (4, 1, 2) => 30,
-            (3, 0, 1) => 30,
-            (3, 1, 2) => 10,
-            (3, 1, 1) => 25,
-            (2, 0, 2) => 25,
-            (_, _, _) => 0,
+        let s = self.count as usize;
+        let sp = self.space_count as usize;
+        let op = self.open_count as usize;
+
+        // Immediate win
+        if s >= self.win_len && sp == 0 {
+            return 11000;
         }
+        if s >= self.win_len && sp == 1 {
+            return 2000;
+        }
+
+        // Almost win (one less than WIN_LEN)
+        if s == self.win_len - 1 && sp == 0 && op == 2 {
+            return 10000;
+        }
+        // Other heuristic scores (generalized relative to WIN_LEN)
+        if s == self.win_len - 2 && sp == 0 && op == 2 {
+            return 50;
+        }
+        if s == self.win_len - 1 && sp == 0 && op == 1 {
+            return 50;
+        }
+        if s == self.win_len - 1 && sp == 1 && op == 1 {
+            return 30;
+        }
+        if s == self.win_len - 1 && sp == 1 && op == 2 {
+            return 30;
+        }
+        if s == self.win_len - 2 && sp == 0 && op == 1 {
+            return 30;
+        }
+        if s == self.win_len - 2 && sp == 1 && op == 2 {
+            return 10;
+        }
+        if s == self.win_len - 2 && sp == 1 && op == 1 {
+            return 25;
+        }
+        if s == self.win_len - 3 && sp == 0 && op == 2 {
+            return 25;
+        }
+
+        0
     }
 
     fn single_score(&self) -> u32 {
@@ -76,6 +116,7 @@ impl PartialEq for Line {
 pub struct Board {
     pub width: usize,
     pub height: usize,
+    pub win_len: usize,
     cells: Vec<Vec<u8>>,
     at_x: i32,
     at_y: i32,
@@ -123,9 +164,14 @@ impl Board {
         if width < 5 && height < 5 {
             panic!("Width or height must larger than")
         }
+
+        let win_len = if width >= 15 && height >= 15 { 5 } else { 4 };
+        eprintln!("board size: {}*{} win_len: {:?}", width, height, win_len);
+
         Self {
             width,
             height,
+            win_len,
             cells: rows.chunks(width).map(|x| x.to_vec()).collect(),
             at_x: -1,
             at_y: -1,
@@ -140,7 +186,7 @@ impl Board {
                         for k in 0..4 {
                             let d = cfg::DIRS[k];
                             let line = self.connect_direction(p, i, j, d[0], d[1], true);
-                            if line.count >= 5 && line.space_count == 0 {
+                            if (line.count as usize) >= self.win_len && line.space_count == 0 {
                                 return Some(p);
                             }
                         }
@@ -195,11 +241,11 @@ impl Board {
         let mut cur_x = row as i32;
         let mut cur_y = col as i32;
         let mut flag = 1;
-        let mut lefted_space = 0;
+        let mut lefted_space: u32 = 0;
         let mut space_allow = if consecutive { 0 } else { 1 };
-        let mut len = 1;
-        let mut open_count = 2;
-        let mut space_count = 0;
+        let mut len: u32 = 1;
+        let mut open_count: u32 = 2;
+        let mut space_count: u32 = 0;
         let mut reversed = false;
         loop {
             loop {
@@ -214,7 +260,7 @@ impl Board {
                     } else {
                         let mut x = cur_x;
                         let mut y = cur_y;
-                        while lefted_space <= 4 && self.get(x, y) == Some(0) {
+                        while lefted_space <= (self.win_len as u32) && self.get(x, y) == Some(0) {
                             lefted_space += 1;
                             x += dx * flag;
                             y += dy * flag;
@@ -237,20 +283,20 @@ impl Board {
             cur_x = row as i32;
             cur_y = col as i32;
         }
-        if len + space_count + lefted_space < 5 {
+        if ((len + space_count + lefted_space) as usize) < self.win_len {
             open_count = 0;
         }
-        if len >= 5 {
+        if (len as usize) >= self.win_len {
             if space_count == 0 {
-                len = 5;
+                len = self.win_len as u32;
                 open_count = 2;
             } else {
-                len = 4;
+                len = (self.win_len - 1) as u32;
                 open_count = 1;
             }
         }
 
-        Line::new(len, space_count, open_count)
+        Line::new(len, space_count, open_count, self.win_len)
     }
 
     fn connect_all_directions(&self, player: u8, row: usize, col: usize) -> Vec<Line> {
@@ -629,7 +675,7 @@ impl Board {
 
     pub fn new_default() -> Board {
         let mut res = String::from("");
-        for _ in 0..(15 * 15) {
+        for _ in 0..(BOARD_WIDTH * BOARD_HEIGHT) {
             res = res + "0";
         }
         Board::from(res)
@@ -686,29 +732,29 @@ mod tests {
 
     #[test]
     fn test_line() {
-        let mut line = Line::new(5, 0, 0);
+        let mut line = Line::new(5, 0, 0, crate::utils::WIN_LEN);
         assert_eq!(line.is_non_refutable(), false);
 
-        line = Line::new(5, 0, 1);
+        line = Line::new(5, 0, 1, crate::utils::WIN_LEN);
         assert_eq!(line.is_non_refutable(), false);
 
-        line = Line::new(5, 1, 0);
+        line = Line::new(5, 1, 0, crate::utils::WIN_LEN);
         assert_eq!(line.is_non_refutable(), false);
     }
 
     #[test]
     fn test_line_compare() {
-        let line1 = Line::new(3, 0, 1);
-        let line2 = Line::new(4, 0, 1);
+        let line1 = Line::new(3, 0, 1, crate::utils::WIN_LEN);
+        let line2 = Line::new(4, 0, 1, crate::utils::WIN_LEN);
         assert_eq!(line1.cmp(&line2), Ordering::Less);
 
-        let line3 = Line::new(3, 1, 2);
+        let line3 = Line::new(3, 1, 2, crate::utils::WIN_LEN);
         assert_eq!(line1.cmp(&line3), Ordering::Less);
 
-        let line4 = Line::new(3, 0, 1);
+        let line4 = Line::new(3, 0, 1, crate::utils::WIN_LEN);
         assert_eq!(line1.cmp(&line4), Ordering::Equal);
 
-        let line5 = Line::new(5, 0, 0);
+        let line5 = Line::new(5, 0, 0, crate::utils::WIN_LEN);
         assert_eq!(line1.cmp(&line5), Ordering::Less);
     }
 
@@ -1015,9 +1061,9 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 1, 4, 1, 1, true);
-        assert_eq!(line, Line::new(1, 0, 0));
+        assert_eq!(line, Line::new(1, 0, 0, crate::utils::WIN_LEN));
         let line = board.connect_direction(1, 1, 4, 1, 1, false);
-        assert_eq!(line, Line::new(1, 1, 0));
+        assert_eq!(line, Line::new(1, 1, 0, crate::utils::WIN_LEN));
 
         board = Board::new(
             String::from(
@@ -1035,9 +1081,9 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 2, 5, 1, 1, true);
-        assert_eq!(line, Line::new(1, 0, 2));
+        assert_eq!(line, Line::new(1, 0, 2, crate::utils::WIN_LEN));
         let line = board.connect_direction(1, 2, 5, 1, 1, false);
-        assert_eq!(line, Line::new(1, 1, 2));
+        assert_eq!(line, Line::new(1, 1, 2, crate::utils::WIN_LEN));
 
         board = Board::new(
             String::from(
@@ -1055,7 +1101,7 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 2, 5, 1, 1, true);
-        assert_eq!(line, Line::new(2, 0, 2));
+        assert_eq!(line, Line::new(2, 0, 2, crate::utils::WIN_LEN));
 
         board = Board::new(
             String::from(
@@ -1073,7 +1119,7 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 2, 5, 1, 1, true);
-        assert_eq!(line, Line::new(2, 0, 2));
+        assert_eq!(line, Line::new(2, 0, 2, crate::utils::WIN_LEN));
 
         board = Board::new(
             String::from(
@@ -1091,7 +1137,7 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 2, 5, 1, 1, true);
-        assert_eq!(line, Line::new(2, 0, 0));
+        assert_eq!(line, Line::new(2, 0, 0, crate::utils::WIN_LEN));
 
         board = Board::new(
             String::from(
@@ -1109,10 +1155,10 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 2, 4, 1, 1, true);
-        assert_eq!(line, Line::new(3, 0, 1));
+        assert_eq!(line, Line::new(3, 0, 1, crate::utils::WIN_LEN));
 
         let line = board.connect_direction(1, 3, 5, 1, 1, true);
-        assert_eq!(line, Line::new(3, 0, 1));
+        assert_eq!(line, Line::new(3, 0, 1, crate::utils::WIN_LEN));
 
         board = Board::new(
             String::from(
@@ -1130,6 +1176,6 @@ mod tests {
         );
 
         let line = board.connect_direction(1, 2, 4, 0, 1, true);
-        assert_eq!(line, Line::new(1, 0, 0));
+        assert_eq!(line, Line::new(1, 0, 0, crate::utils::WIN_LEN));
     }
 }

@@ -2,7 +2,7 @@
 #![cfg(feature = "alphazero")]
 
 use super::alphazero_mcts::AlphaZeroMCTS;
-use super::alphazero_net::{AlphaZeroNet, AlphaZeroTrainer};
+use super::alphazero_net::AlphaZeroTrainer;
 use super::board::Board;
 use super::utils::*;
 use serde::{Deserialize, Serialize};
@@ -324,26 +324,27 @@ impl AlphaZeroPipeline {
 
     /// 将棋盘转换为向量
     fn board_to_vec(&self, board: &Board, player: u8) -> Vec<f32> {
-        let mut vec = vec![0.0; 3 * 15 * 15];
+        let flat = BOARD_WIDTH * BOARD_HEIGHT;
+        let mut vec = vec![0.0; 3 * flat];
 
-        for i in 0..15 {
-            for j in 0..15 {
+        for i in 0..BOARD_HEIGHT {
+            for j in 0..BOARD_WIDTH {
                 let cell = board.get(i as i32, j as i32);
-                let idx = i * 15 + j;
+                let idx = i * BOARD_WIDTH + j;
 
                 match cell {
                     Some(p) if p == player => {
                         vec[idx] = 1.0;
                     }
                     Some(p) if p != 0 => {
-                        vec[15 * 15 + idx] = 1.0;
+                        vec[flat + idx] = 1.0;
                     }
                     _ => {}
                 }
             }
         }
 
-        for i in (2 * 15 * 15)..(3 * 15 * 15) {
+        for i in (2 * flat)..(3 * flat) {
             vec[i] = if player == 1 { 1.0 } else { 0.0 };
         }
 
@@ -354,8 +355,9 @@ impl AlphaZeroPipeline {
     fn prepare_batch(&self, samples: &[TrainingSample]) -> (Tensor, Tensor, Tensor) {
         let batch_size = samples.len();
 
-        let mut boards_data = Vec::with_capacity(batch_size * 3 * 15 * 15);
-        let mut policies_data = Vec::with_capacity(batch_size * 225);
+        let flat = BOARD_WIDTH * BOARD_HEIGHT;
+        let mut boards_data = Vec::with_capacity(batch_size * 3 * flat);
+        let mut policies_data = Vec::with_capacity(batch_size * flat);
         let mut values_data = Vec::with_capacity(batch_size);
 
         for sample in samples {
@@ -364,8 +366,13 @@ impl AlphaZeroPipeline {
             values_data.push(sample.value);
         }
 
-        let boards = Tensor::from_slice(&boards_data).view([batch_size as i64, 3, 15, 15]);
-        let policies = Tensor::from_slice(&policies_data).view([batch_size as i64, 225]);
+        let boards = Tensor::from_slice(&boards_data).view([
+            batch_size as i64,
+            3,
+            BOARD_HEIGHT as i64,
+            BOARD_WIDTH as i64,
+        ]);
+        let policies = Tensor::from_slice(&policies_data).view([batch_size as i64, (flat) as i64]);
         let values = Tensor::from_slice(&values_data).view([batch_size as i64, 1]);
 
         (boards, policies, values)

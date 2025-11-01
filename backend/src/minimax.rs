@@ -14,8 +14,8 @@ pub struct MiniMax {
 }
 
 impl GomokuSolver for MiniMax {
-    fn best_move(input: &str) -> Move {
-        let mut board = Board::new(input.to_string(), 15, 15);
+    fn best_move(input: &str, width: usize, height: usize) -> Move {
+        let mut board = Board::new(input.to_string(), width, height);
         let player = board.next_player();
         let mut runner = MiniMax::new(player, 5);
         let (s, r, c) = runner.run_heuristic(&mut board, player);
@@ -185,7 +185,7 @@ mod tests {
 
     fn make_empty_board() -> Board {
         let mut res = String::from("");
-        for _ in 0..(15 * 15) {
+        for _ in 0..(BOARD_WIDTH * BOARD_HEIGHT) {
             res = res + "0";
         }
         Board::from(res)

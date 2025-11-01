@@ -1,12 +1,14 @@
 /* tslint:disable */
 /* eslint-disable */
-export function gomoku_solve(input: string, algo_type: string): string;
+export function gomoku_solve(input: string, algo_type: string, width: number, height: number): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly gomoku_solve: (a: number, b: number, c: number, d: number) => [number, number];
+  readonly gomoku_solve: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+  readonly __wbindgen_exn_store: (a: number) => void;
+  readonly __externref_table_alloc: () => number;
   readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

@@ -21,8 +21,8 @@ pub mod alphazero_solver;
 pub mod alphazero_trainer;
 
 #[wasm_bindgen]
-pub fn gomoku_solve(input: String, algo_type: String) -> String {
+pub fn gomoku_solve(input: String, algo_type: String, width: usize, height: usize) -> String {
     let board = input.clone();
-    let res = control::solve_it(&board, &algo_type);
+    let res = control::solve_it(&board, &algo_type, width, height);
     res.into()
 }

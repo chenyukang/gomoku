@@ -2,6 +2,7 @@
 use super::algo::gomoku_solve;
 use super::board::Board;
 use super::game_record::{GameRecord, GameState};
+use crate::utils::BOARD_HEIGHT;
 
 #[cfg(feature = "random")]
 use rand::Rng;
@@ -42,7 +43,7 @@ impl SelfPlay {
                 }
 
                 let mut rng = rand::thread_rng();
-                let center: usize = 7; // 15x15 棋盘的中心
+                let center: usize = BOARD_HEIGHT / 2; // center based on board height
 
                 // 第一步：在中心区域随机选择
                 let offset: usize = 2; // 中心 ±2 范围
@@ -172,7 +173,7 @@ impl SelfPlay {
             // 获取最佳落子
             let board_str = board.to_string();
             // 获取最佳落子
-            let best_move = gomoku_solve(&board_str, algo);
+            let best_move = gomoku_solve(&board_str, algo, board.width, board.height);
 
             if self.verbose {
                 println!(

@@ -34,8 +34,8 @@ struct Message {
     result: Body,
 }
 
-pub fn solve_it(input: &str, algo_type: &str) -> String {
-    let mut board = Board::from(input.to_string());
+pub fn solve_it(input: &str, algo_type: &str, width: usize, height: usize) -> String {
+    let mut board = Board::new(input.to_string(), width, height);
     let player = board.next_player();
     let mut winner = 0;
     cfg_if::cfg_if! {
@@ -49,7 +49,7 @@ pub fn solve_it(input: &str, algo_type: &str) -> String {
     if let Some(w) = board.any_winner() {
         winner = w;
     } else {
-        let mv = algo::gomoku_solve(input, algo_type);
+        let mv = algo::gomoku_solve(input, algo_type, width, height);
         row = mv.x;
         col = mv.y;
         score = mv.score;

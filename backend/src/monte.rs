@@ -288,8 +288,8 @@ impl MonteCarlo {
 }
 
 impl GomokuSolver for MonteCarlo {
-    fn best_move(input: &str) -> Move {
-        let board = Board::new(input.to_string(), 15, 15);
+    fn best_move(input: &str, width: usize, height: usize) -> Move {
+        let board = Board::new(input.to_string(), width, height);
         let player = board.next_player();
         let mut monte = MonteCarlo::new(board, player, 3000);
         monte.search_move()

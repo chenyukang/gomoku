@@ -7,8 +7,6 @@ use super::utils::*;
 use std::collections::HashMap;
 use tch::{Device, Kind, Tensor};
 
-type StateKey = String;
-
 /// AlphaZero MCTS 节点
 #[derive(Debug, Clone)]
 struct AlphaNode {
@@ -109,16 +107,17 @@ impl AlphaZeroMCTS {
 
         // 创建子节点
         // 将 Tensor 转换为 Vec<f32>
+        let flat_size = BOARD_WIDTH * BOARD_HEIGHT;
         let policy_tensor = policy
-            .view([225])
+            .view([flat_size as i64])
             .to_kind(Kind::Float)
             .to_device(Device::Cpu);
-        let policy_data: Vec<f32> = (0..225)
-            .map(|i| policy_tensor.get(i).double_value(&[]) as f32)
+        let policy_data: Vec<f32> = (0..flat_size)
+            .map(|i| policy_tensor.get(i as i64).double_value(&[]) as f32)
             .collect();
 
         for mv in valid_moves {
-            let move_idx = mv.x * 15 + mv.y;
+            let move_idx = mv.x * BOARD_WIDTH + mv.y;
             let prior = policy_data[move_idx as usize].exp(); // log_softmax -> softmax
 
             let child = AlphaNode::new(prior);
@@ -186,7 +185,7 @@ impl AlphaZeroMCTS {
     /// 获取搜索策略（访问计数分布）
     pub fn get_policy(&self) -> Vec<f32> {
         let root = &self.nodes[self.root_index];
-        let mut policy = vec![0.0; 225];
+        let mut policy = vec![0.0; BOARD_WIDTH * BOARD_HEIGHT];
 
         let total_visits: u32 = root
             .children
@@ -200,7 +199,7 @@ impl AlphaZeroMCTS {
 
         for (&(x, y), &child_idx) in &root.children {
             let visits = self.nodes[child_idx].visit_count;
-            policy[x * 15 + y] = visits as f32 / total_visits as f32;
+            policy[x * BOARD_WIDTH + y] = visits as f32 / total_visits as f32;
         }
 
         policy
@@ -252,19 +251,19 @@ impl AlphaZeroMCTS {
 
     /// 将棋盘转换为张量
     fn board_to_tensor(&self, board: &Board, player: u8) -> Tensor {
-        let mut tensor_data = vec![0.0f32; 3 * 15 * 15];
+        let mut tensor_data = vec![0.0f32; 3 * BOARD_WIDTH * BOARD_HEIGHT];
 
-        for i in 0..15 {
-            for j in 0..15 {
+        for i in 0..BOARD_HEIGHT {
+            for j in 0..BOARD_WIDTH {
                 let cell = board.get(i as i32, j as i32);
-                let idx = i * 15 + j;
+                let idx = i * BOARD_WIDTH + j;
 
                 match cell {
                     Some(p) if p == player => {
                         tensor_data[idx] = 1.0; // Channel 0: 当前玩家
                     }
                     Some(p) if p != 0 => {
-                        tensor_data[15 * 15 + idx] = 1.0; // Channel 1: 对手
+                        tensor_data[BOARD_WIDTH * BOARD_HEIGHT + idx] = 1.0; // Channel 1: 对手
                     }
                     _ => {}
                 }
@@ -272,13 +271,13 @@ impl AlphaZeroMCTS {
         }
 
         // Channel 2: 当前玩家标记
-        let player_channel_start = 2 * 15 * 15;
-        for i in player_channel_start..(3 * 15 * 15) {
+        let player_channel_start = 2 * BOARD_WIDTH * BOARD_HEIGHT;
+        for i in player_channel_start..(3 * BOARD_WIDTH * BOARD_HEIGHT) {
             tensor_data[i] = if player == 1 { 1.0 } else { 0.0 };
         }
 
         Tensor::from_slice(&tensor_data)
-            .view([1, 3, 15, 15])
+            .view([1, 3, BOARD_HEIGHT as i64, BOARD_WIDTH as i64])
             .to_device(Device::cuda_if_available())
     }
 }

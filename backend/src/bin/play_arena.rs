@@ -1,11 +1,11 @@
 // AlphaZero vs 其他算法对弈工具
 #![cfg(feature = "alphazero")]
 
+use gomoku::algo::GomokuSolver;
 use gomoku::alphazero_solver::AlphaZeroSolver;
 use gomoku::board::Board;
 use gomoku::minimax::MiniMax;
 use gomoku::monte::MonteCarlo;
-use gomoku::algo::GomokuSolver;
 use std::io::{self, Write};
 
 fn main() {
@@ -81,8 +81,8 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
     println!(
         "玩家2 (○): {}",
         match opponent {
-                    OpponentType::Monte(_) => "Monte Carlo",
-                    OpponentType::Minimax => "Minimax",
+            OpponentType::Monte(_) => "Monte Carlo",
+            OpponentType::Minimax => "Minimax",
         }
     );
     println!("{}\n", "=".repeat(60));
@@ -111,7 +111,7 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
                 }
                 OpponentType::Minimax => {
                     let board_str = board.to_string();
-                    let mv = MiniMax::best_move(&board_str);
+                    let mv = MiniMax::best_move(&board_str, board.width, board.height);
                     Some((mv.x as i32, mv.y as i32))
                 }
             }
@@ -153,7 +153,7 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
         }
 
         // 防止无限循环
-        if move_count >= 225 {
+        if move_count >= board.width * board.height {
             println!("\n🤝 棋盘已满，平局!");
             break;
         }
@@ -213,10 +213,15 @@ fn self_play(alphazero: &AlphaZeroSolver) {
 }
 
 fn print_board(board: &Board, last_move: Option<(i32, i32)>) {
-    println!("\n   0 1 2 3 4 5 6 7 8 9 A B C D E");
-    for i in 0..15 {
+    // Print header columns up to board.width
+    print!("\n   ");
+    for j in 0..board.width {
+        print!("{:X} ", j);
+    }
+    println!();
+    for i in 0..board.height {
         print!("{:2} ", i);
-        for j in 0..15 {
+        for j in 0..board.width {
             let cell = board.get(i as i32, j as i32);
             let is_last = if let Some((x, y)) = last_move {
                 x == i as i32 && y == j as i32

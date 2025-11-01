@@ -3,6 +3,7 @@
 
 #![cfg(feature = "alphazero")]
 
+use crate::utils::{BOARD_HEIGHT, BOARD_WIDTH};
 use tch::{nn, nn::OptimizerConfig, Device, Tensor};
 
 /// 残差块
@@ -63,6 +64,7 @@ pub struct AlphaZeroNet {
     value_fc2: nn::Linear,
 
     num_filters: i64,
+    #[allow(dead_code)]
     device: Device,
 }
 
@@ -93,12 +95,22 @@ impl AlphaZeroNet {
         // 策略头
         let policy_conv = nn::conv2d(vs / "policy_conv", num_filters, 2, 1, Default::default());
         let policy_bn = nn::batch_norm2d(vs / "policy_bn", 2, Default::default());
-        let policy_fc = nn::linear(vs / "policy_fc", 2 * 15 * 15, 15 * 15, Default::default());
+        let policy_fc = nn::linear(
+            vs / "policy_fc",
+            (2 * (BOARD_WIDTH * BOARD_HEIGHT)) as i64,
+            (BOARD_WIDTH * BOARD_HEIGHT) as i64,
+            Default::default(),
+        );
 
         // 价值头
         let value_conv = nn::conv2d(vs / "value_conv", num_filters, 1, 1, Default::default());
         let value_bn = nn::batch_norm2d(vs / "value_bn", 1, Default::default());
-        let value_fc1 = nn::linear(vs / "value_fc1", 15 * 15, 256, Default::default());
+        let value_fc1 = nn::linear(
+            vs / "value_fc1",
+            (BOARD_WIDTH * BOARD_HEIGHT) as i64,
+            256,
+            Default::default(),
+        );
         let value_fc2 = nn::linear(vs / "value_fc2", 256, 1, Default::default());
 
         Self {
@@ -125,13 +137,13 @@ impl AlphaZeroNet {
     /// 前向传播
     ///
     /// # 输入
-    /// - xs: (batch, 3, 15, 15) 的棋盘状态
+    /// - xs: (batch, 3, W, H) 的棋盘状态
     ///   - Channel 0: 当前玩家的棋子
     ///   - Channel 1: 对手的棋子
     ///   - Channel 2: 当前玩家标记（全1或全0）
     ///
     /// # 输出
-    /// - policy: (batch, 225) 每个位置的概率
+    /// - policy: (batch, W*H) 每个位置的概率
     /// - value: (batch, 1) 局面评估值 [-1, 1]
     pub fn forward(&self, xs: &Tensor, train: bool) -> (Tensor, Tensor) {
         // 共享特征提取
@@ -273,10 +285,13 @@ mod tests {
         let net = AlphaZeroNet::new(&vs.root(), 64, 5);
 
         // 创建一个随机输入
-        let input = Tensor::randn(&[1, 3, 15, 15], (tch::Kind::Float, Device::Cpu));
+        let input = Tensor::randn(
+            &[1, 3, BOARD_WIDTH as i64, BOARD_HEIGHT as i64],
+            (tch::Kind::Float, Device::Cpu),
+        );
         let (policy, value) = net.predict(&input);
 
-        assert_eq!(policy.size(), vec![1, 225]);
+        assert_eq!(policy.size(), vec![1, (BOARD_WIDTH * BOARD_HEIGHT) as i64]);
         assert_eq!(value.size(), vec![1, 1]);
 
         println!("✅ Network test passed");

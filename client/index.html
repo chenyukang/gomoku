@@ -14,6 +14,102 @@
   <script src="assets/jquery-3.3.1.min.js"></script>
   <script src="assets/bootstrap.min.js"></script>
   <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <style>
+    /* Winner modal styles */
+    .winner-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 260ms ease-in-out;
+    }
+
+    .winner-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .winner-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f1f8ff 100%);
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      text-align: center;
+      /* Use fixed positioning and translate centering to avoid being affected by ancestor transforms */
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -60%) scale(0.98);
+      opacity: 0;
+      transition: transform 260ms cubic-bezier(.2, .9, .3, 1), opacity 180ms ease;
+      max-width: 340px;
+      width: 90%;
+      z-index: 2100;
+    }
+
+    .winner-overlay.show .winner-card {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    .winner-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .winner-sub {
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    .winner-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 6px;
+    }
+
+    .winner-btn.primary {
+      background: #448aff;
+      color: white;
+    }
+
+    .winner-btn.ghost {
+      background: transparent;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    /* Highlight winning cell */
+    .winner-cell-highlight {
+      box-shadow: 0 0 0 3px rgba(68, 138, 255, 0.15), 0 0 18px 6px rgba(68, 138, 255, 0.12) inset;
+      animation: winner-pulse 900ms ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes winner-pulse {
+      0% {
+        box-shadow: 0 0 0 2px rgba(68, 138, 255, 0.08), 0 0 6px rgba(68, 138, 255, 0.06) inset;
+      }
+
+      50% {
+        box-shadow: 0 0 0 10px rgba(68, 138, 255, 0.06), 0 0 20px rgba(68, 138, 255, 0.08) inset;
+      }
+
+      100% {
+        box-shadow: 0 0 0 2px rgba(68, 138, 255, 0.08), 0 0 6px rgba(68, 138, 255, 0.06) inset;
+      }
+    }
+  </style>
 </head>
 
 <body style="font-size: 12px; background-color: #fff;">
@@ -63,16 +159,16 @@
           </div>
           <div id="panel_status" class="panel-body">
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="algo_type" id="algo_minimax" onclick="setAlgoType()" checked>
-                <label class="form-check-label" for="algo_minimax">
-                  MiniMax
-                </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="algo_type" id="algo_monte_carlo"
+              <input class="form-check-input" type="radio" name="algo_type" id="algo_monte_carlo" checked
                 onclick="setAlgoType()">
               <label class="form-check-label" for="algo_monte_carlo">
                 Monte Carlo
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="algo_type" id="algo_minimax" onclick="setAlgoType()">
+              <label class="form-check-label" for="algo_minimax">
+                MiniMax
               </label>
             </div>
           </div>
@@ -91,8 +187,8 @@
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="backend_type" id="backend_wasm"
-                onclick="setBackendType()" checked>
+              <input class="form-check-input" type="radio" name="backend_type" id="backend_wasm" checked
+                onclick="setBackendType()">
               <label class="form-check-label" for="backend_wasm">
                 WASM
               </label>
@@ -118,6 +214,20 @@
               onclick="restartGame();">Restart</button>&nbsp;
             <button id="btn_undo" type="button" class="btn btn-primary btn-md" disabled="true"
               onclick="undoMove();">Undo</button>
+            <hr />
+            <div>
+              <label>Variant:</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="variant" id="variant_connect5" value="connect5"
+                  checked onclick="setVariant('connect5')">
+                <label class="form-check-label" for="variant_connect5">Connect5 (15x15)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="variant" id="variant_connect4" value="connect4"
+                  onclick="setVariant('connect4')">
+                <label class="form-check-label" for="variant_connect4">Connect4 (7x6)</label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -130,6 +240,19 @@
             No Data Available.
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Winner Modal (hidden by default) -->
+  <div id="winner_overlay" class="winner-overlay" aria-hidden="true">
+    <div class="winner-card" role="dialog" aria-modal="true">
+      <div id="winner_icon" style="font-size:40px; margin-bottom:6px">●</div>
+      <div id="winner_title" class="winner-title">Player wins!</div>
+      <div id="winner_sub" class="winner-sub">Congratulations</div>
+      <div>
+        <button class="winner-btn primary" onclick="hideWinner(true)">Play again</button>
+        <button class="winner-btn ghost" onclick="hideWinner(false)">Close</button>
       </div>
     </div>
   </div>
@@ -174,16 +297,18 @@
   var pb_ai = $('#pb_ai');
 
   // Global game variables
-  var board_size = 15;
+  // Default board size (cols x rows). For Gomoku default is 15x15.
+  var BOARD_COLS = 15;
+  var BOARD_ROWS = 15;
   var game_active;
   var current_board;
   var human_player, ai_player;
   var move_log;
   var undo_remaining;
-  var algo_type = 'minimax';
+  var algo_type = 'monte_carlo';
   var backend_type = 'backend_wasm';
 
-  var wasmWorker = new Worker('worker.js', { type: "module" });
+  var wasmWorker = new Worker('worker.js', {type: "module"});
 
   wasmWorker.onmessage = function (result) {
     processResponse(result.data);
@@ -211,8 +336,8 @@
     } else {
       ai_player = 1;
       // Put a piece for black (AI)
-      addPiece(board_size >> 1, board_size >> 1, 1);
-      renderCurrentBoard(board_size >> 1, board_size >> 1);
+      addPiece(Math.floor(BOARD_ROWS / 2), Math.floor(BOARD_COLS / 2), 1);
+      renderCurrentBoard(Math.floor(BOARD_ROWS / 2), Math.floor(BOARD_COLS / 2));
     }
 
     // Game status
@@ -227,22 +352,23 @@
     var container_size = panel_gamearea.offsetWidth - 32;
 
     // Control table size with cell size
-    var cell_width = Math.floor((container_size) / board_size);
-    var cell_height = Math.floor((container_size) / board_size);
+    // For rectangular boards compute cell size from both dims and choose the limiting factor
+    var cell_width = Math.floor((container_size) / BOARD_COLS);
+    var cell_height = Math.floor((container_size) / BOARD_ROWS);
 
     // No more blurry
     cell_width -= cell_width % 2;
     cell_height -= cell_height % 2;
 
     // Set containing div size
-    div_gamearea.style.width = cell_width * board_size + 'px';
-    div_gamearea.style.height = cell_height * board_size + 'px';
+    div_gamearea.style.width = cell_width * BOARD_COLS + 'px';
+    div_gamearea.style.height = cell_height * BOARD_ROWS + 'px';
 
     // Initialize tbl_board
     tbl_board.innerHTML = "";
-    for (var r = 0; r < board_size; r++) {
+    for (var r = 0; r < BOARD_ROWS; r++) {
       var row = tbl_board.insertRow();
-      for (var c = 0; c < board_size; c++) {
+      for (var c = 0; c < BOARD_COLS; c++) {
         // New cell and data
         var cell = row.insertCell();
         cell.r = r; cell.c = c;
@@ -262,7 +388,7 @@
   // Initializes empty board
   function initBoard() {
     var b = [];
-    for (var i = 0; i < board_size * board_size; i++)
+    for (var i = 0; i < BOARD_ROWS * BOARD_COLS; i++)
       b.push('0');
 
     return b.join('');
@@ -270,13 +396,13 @@
 
   // Gets cell value
   function getCell(board, r, c) {
-    return parseInt(board[board_size * r + c]);
+    return parseInt(board[BOARD_COLS * r + c]);
   }
 
   // Generates a new board after replacing a cell
   function replaceCell(board, r, c, val) {
-    if (r < 0 || r >= board_size || c < 0 || c >= board_size) return board;
-    var idx = board_size * r + c;
+    if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return board;
+    var idx = BOARD_COLS * r + c;
     return board.substr(0, idx) + val.toString() + board.substr(idx + 1);
   }
 
@@ -317,6 +443,19 @@
       backend_type = "backend_azure";
       api_base_url = azure_url;
     }
+  }
+
+  function setVariant(v) {
+    if (v === 'connect4') {
+      BOARD_COLS = 7;
+      BOARD_ROWS = 6;
+      // If using connect4 rules, WIN_LEN changes are handled server-side via constants if desired.
+    } else {
+      BOARD_COLS = 15;
+      BOARD_ROWS = 15;
+    }
+    // Re-init board UI and state
+    init(human_player);
   }
 
   function undoMove() {
@@ -374,11 +513,11 @@
     if (on) {
       pb_ai.width('0%');
       pb_ai.attr('aria-valuenow', 0);
-      p_ai.animate({ 'opacity': 1 }, { duration: 300, queue: false });
-      pb_ai.animate({ 'width': '100%', 'aria-valuenow': 100 }, { duration: 5000, easing: 'linear', queue: false });
+      p_ai.animate({'opacity': 1}, {duration: 300, queue: false});
+      pb_ai.animate({'width': '100%', 'aria-valuenow': 100}, {duration: 5000, easing: 'linear', queue: false});
     } else {
-      pb_ai.animate({ 'width': '100%', 'aria-valuenow': 100 }, { duration: 250, queue: false });
-      p_ai.animate({ 'opacity': 0 }, { duration: 300, queue: false });
+      pb_ai.animate({'width': '100%', 'aria-valuenow': 100}, {duration: 250, queue: false});
+      p_ai.animate({'opacity': 0}, {duration: 300, queue: false});
     }
   }
 
@@ -403,8 +542,8 @@
       new_piece_c = -1;
     }
 
-    for (var r = 0; r < board_size; r++) {
-      for (var c = 0; c < board_size; c++) {
+    for (var r = 0; r < BOARD_ROWS; r++) {
+      for (var c = 0; c < BOARD_COLS; c++) {
         var cell = tbl_board.rows[r].cells[c];
         var cell_innerhtml = '<svg style="display: block; width: 100%; height: 100%;">';
 
@@ -418,8 +557,8 @@
         // Grid (lines)
         if (r > 0) cell_innerhtml += svg_lines[0];
         if (c > 0) cell_innerhtml += svg_lines[1];
-        if (r < board_size - 1) cell_innerhtml += svg_lines[2];
-        if (c < board_size - 1) cell_innerhtml += svg_lines[3];
+        if (r < BOARD_ROWS - 1) cell_innerhtml += svg_lines[2];
+        if (c < BOARD_COLS - 1) cell_innerhtml += svg_lines[3];
 
         // Pieces
         cell_innerhtml += svg_circles[cell_value - 1];
@@ -456,8 +595,8 @@
     if (backend_type != "backend_wasm") {
       sendGameStatus(current_board);
     } else {
-      // Send game status
-      wasmWorker.postMessage([current_board, algo_type]);
+      // Send game status (include board geometry)
+      wasmWorker.postMessage([current_board, algo_type, BOARD_COLS, BOARD_ROWS]);
     }
   }
 
@@ -472,7 +611,7 @@
 
   // Sends status to backend
   function sendGameStatus(board) {
-    var req_url = api_base_url + '/api/move?state=' + board + '&algo_type=' + algo_type;
+    var req_url = api_base_url + '/api/move?state=' + board + '&algo_type=' + algo_type + '&width=' + BOARD_COLS + '&height=' + BOARD_ROWS;
 
     $.get(req_url, function (data) {
       processResponse(data);
@@ -501,10 +640,12 @@
     if (result.winning_player == '1') {
       updateStatusPanel('Black wins!', playerColors(), '#448aff');
       gameActive(false, true);
+      showWinner(1, parseInt(result.move_r), parseInt(result.move_c));
       //("Black Win!");
     } else if (result.winning_player == '2') {
       updateStatusPanel('White wins!', playerColors(), '#448aff');
       gameActive(false, true);
+      showWinner(2, parseInt(result.move_r), parseInt(result.move_c));
       //alert("White Win!");
     } else {
       gameActive(true);
@@ -561,6 +702,57 @@
     if (x >= 1000 && x < 1000000) return (x / 1000).toFixed(2) + 'k';
     if (x >= 1000000 && x < 1000000000) return (x / 1000000).toFixed(2) + 'm';
     if (x >= 1000000000) return (x / 1000000000).toFixed(2) + 'b';
+  }
+
+  // Show animated winner modal. player: 1 or 2
+  // showWinner(player, r, c) - r/c are zero-based board coords to highlight
+  function showWinner(player, r, c) {
+    var overlay = document.getElementById('winner_overlay');
+    var title = document.getElementById('winner_title');
+    var sub = document.getElementById('winner_sub');
+    var icon = document.getElementById('winner_icon');
+    if (player == 1) {
+      title.innerText = 'Black wins!';
+      sub.innerHTML = playerColors();
+      icon.innerText = '●';
+      icon.style.color = '#222';
+    } else if (player == 2) {
+      title.innerText = 'White wins!';
+      sub.innerHTML = playerColors();
+      icon.innerText = '○';
+      icon.style.color = '#cc9f5d';
+    }
+    // Highlight winning cell if provided
+    if (typeof r !== 'undefined' && typeof c !== 'undefined') {
+      try {
+        var cell = tbl_board.rows[r].cells[c];
+        if (cell) {
+          cell.classList.add('winner-cell-highlight');
+        }
+      } catch (e) {
+        // ignore if out of range
+      }
+    }
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  // Hide winner modal. If restart is true, restart game
+  function hideWinner(restart) {
+    var overlay = document.getElementById('winner_overlay');
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+    // remove highlight
+    try {
+      for (var r = 0; r < tbl_board.rows.length; r++) {
+        for (var c = 0; c < tbl_board.rows[r].cells.length; c++) {
+          tbl_board.rows[r].cells[c].classList.remove('winner-cell-highlight');
+        }
+      }
+    } catch (e) { }
+    if (restart) {
+      restartGame();
+    }
   }
 </script>
 

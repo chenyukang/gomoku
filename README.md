@@ -9,12 +9,9 @@ Azure Function, Rust and WebAssembly.
 
 ### Build server backend
 ```sh
-cd backend
-cargo build --release --features "server"
-./target/release/gomoku -s  //start server listen to http://localhost:3000
-
+run.sh
 ```
-Open client/index.html in browser and have fun.
+Open `http://localhost:3000` in browser and have fun.
 
 ### Build WASM backend
 
