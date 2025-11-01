@@ -130,7 +130,6 @@ impl Tree {
     }
 
     pub fn best_child(&self, index: usize) -> usize {
-        //let c_param = 0.5;
         let c_param = 0.7;
         let mut res = 0;
         let mut cur_max = f64::MIN;

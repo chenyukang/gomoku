@@ -8,31 +8,43 @@ fn main() {
 
     if args.len() < 2 {
         println!(
-            "Usage: {} <output_model_path> [num_games] [num_iterations]",
+            "Usage: {} <output_model_path> [num_games_per_iter] [train_iters] [num_epochs]",
             args[0]
         );
-        println!("Example: {} ../data/test_model.pt 3 50", args[0]);
+        println!("Example: {} ../data/model.pt 100 500 10", args[0]);
+        println!();
+        println!("Arguments:");
+        println!("  output_model_path    - 模型保存路径");
+        println!("  num_games_per_iter   - 每轮自我对弈游戏数 (default: 100)");
+        println!("  train_iters          - 每轮训练迭代数 (default: 500)");
+        println!("  num_epochs           - 迭代训练轮数 (default: 10)");
         return;
     }
 
     let model_path = &args[1];
     let num_games = if args.len() > 2 {
-        args[2].parse().unwrap_or(3)
+        args[2].parse().unwrap_or(100)
     } else {
-        3
+        100
     };
     let num_iterations = if args.len() > 3 {
-        args[3].parse().unwrap_or(50)
+        args[3].parse().unwrap_or(500)
     } else {
-        50
+        500
+    };
+    let num_epochs = if args.len() > 4 {
+        args[4].parse().unwrap_or(10)
+    } else {
+        10
     };
 
-    println!("🚀 Training AlphaZero");
-    println!("   Games: {}", num_games);
-    println!("   Training iterations: {}", num_iterations);
+    println!("🚀 AlphaZero Iterative Training");
+    println!("   Games per epoch: {}", num_games);
+    println!("   Training iterations per epoch: {}", num_iterations);
+    println!("   Number of epochs: {}", num_epochs);
     println!("   Output: {}\n", model_path);
 
-    // 创建小规模配置用于快速训练
+    // 创建配置
     let config = AlphaZeroConfig {
         num_filters: 32,
         num_res_blocks: 2,
@@ -40,27 +52,28 @@ fn main() {
         batch_size: 32,
         num_self_play_games: num_games,
         num_training_iterations: num_iterations,
-        replay_buffer_size: 10000,
-        num_mcts_simulations: 25, // 减少MCTS模拟次数以加速训练
+        replay_buffer_size: 100000, // 增大缓冲区
+        num_mcts_simulations: 25,
         temperature: 1.0,
     };
 
     let mut pipeline = AlphaZeroPipeline::new(config);
 
-    // 生成自对弈数据
-    pipeline.generate_self_play_data(num_games);
+    // 使用改进的迭代训练循环
+    pipeline.train_loop(num_epochs);
 
-    // 训练
-    pipeline.train(num_iterations);
-
-    // 保存模型
+    // 保存最终模型
     match pipeline.save_model(model_path) {
         Ok(_) => {
             println!("\n✅ Training complete! Model saved to {}", model_path);
-            println!("\n⚠️  Important: To use this model with play_match, convert it first:");
+            println!("\n💡 Next steps:");
             println!(
-                "   python3 convert_model.py {} {}_converted.pt",
+                "   1. Convert model: python3 convert_model.py {} {}_converted.pt",
                 model_path,
+                model_path.trim_end_matches(".pt")
+            );
+            println!(
+                "   2. Test model: ./play_match.sh {}_converted.pt 10 500",
                 model_path.trim_end_matches(".pt")
             );
         }
