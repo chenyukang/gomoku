@@ -1,3 +1,4 @@
 /backend/pkg
 *.out
 data
+training_data_test

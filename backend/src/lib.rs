@@ -19,6 +19,8 @@ pub mod alphazero_net;
 pub mod alphazero_solver;
 #[cfg(feature = "alphazero")]
 pub mod alphazero_trainer;
+#[cfg(feature = "alphazero")]
+pub mod parallel_training;
 
 #[wasm_bindgen]
 pub fn gomoku_solve(input: String, algo_type: String) -> String {

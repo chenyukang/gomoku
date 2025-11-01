@@ -2,7 +2,7 @@
 #![cfg(feature = "alphazero")]
 
 use super::alphazero_mcts::AlphaZeroMCTS;
-use super::alphazero_net::{AlphaZeroNet, AlphaZeroTrainer};
+use super::alphazero_net::AlphaZeroTrainer;
 use super::board::Board;
 use super::utils::*;
 use serde::{Deserialize, Serialize};

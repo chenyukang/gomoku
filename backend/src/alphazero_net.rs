@@ -122,6 +122,16 @@ impl AlphaZeroNet {
         self.num_filters
     }
 
+    /// 获取残差块数量
+    pub fn num_res_blocks(&self) -> i64 {
+        self.res_blocks.len() as i64
+    }
+
+    /// 获取设备
+    pub fn device(&self) -> Device {
+        self.device
+    }
+
     /// 前向传播
     ///
     /// # 输入
@@ -259,6 +269,109 @@ impl AlphaZeroTrainer {
     /// 加载模型
     pub fn load(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         AlphaZeroNet::load(&mut self.vs, path)
+    }
+
+    /// 从文件创建训练器（用于并行训练）
+    /// 如果文件不存在，创建新模型
+    pub fn from_file(
+        path: &str,
+        learning_rate: f64,
+        num_filters: i64,
+        num_res_blocks: i64,
+    ) -> Self {
+        let device = Device::cuda_if_available();
+        let mut vs = nn::VarStore::new(device);
+        let net = AlphaZeroNet::new(&vs.root(), num_filters, num_res_blocks);
+
+        // 尝试加载模型参数
+        if std::path::Path::new(path).exists() {
+            match vs.load(path) {
+                Ok(_) => println!("✅ Loaded existing model from {}", path),
+                Err(e) => {
+                    eprintln!("⚠️  Failed to load model ({}), using new model instead", e);
+                }
+            }
+        } else {
+            println!("📝 Creating new model (no checkpoint found at {})", path);
+        }
+
+        let optimizer = nn::Adam::default().build(&vs, learning_rate).unwrap();
+
+        Self { vs, net, optimizer }
+    }
+
+    /// 在给定样本上训练（用于并行训练）
+    pub fn train_on_samples(
+        &mut self,
+        samples: &[super::alphazero_trainer::TrainingSample],
+        num_iterations: usize,
+    ) {
+        use rand::seq::SliceRandom;
+        use rand::thread_rng;
+
+        let batch_size = 32;
+        let mut rng = thread_rng();
+
+        println!(
+            "Training on {} samples for {} iterations",
+            samples.len(),
+            num_iterations
+        );
+
+        for iter in 0..num_iterations {
+            // 随机采样一个批次
+            let batch: Vec<_> = samples
+                .choose_multiple(&mut rng, batch_size.min(samples.len()))
+                .cloned()
+                .collect();
+
+            if batch.is_empty() {
+                continue;
+            }
+
+            // 准备批次数据
+            let boards: Vec<f32> = batch.iter().flat_map(|s| s.board.iter().copied()).collect();
+            let policies: Vec<f32> = batch
+                .iter()
+                .flat_map(|s| s.policy.iter().copied())
+                .collect();
+            let values: Vec<f32> = batch.iter().map(|s| s.value).collect();
+
+            let boards_tensor = Tensor::f_from_slice(&boards)
+                .unwrap()
+                .reshape(&[batch.len() as i64, 3, 15, 15])
+                .to_device(self.vs.device());
+
+            let policies_tensor = Tensor::f_from_slice(&policies)
+                .unwrap()
+                .reshape(&[batch.len() as i64, 225])
+                .to_device(self.vs.device());
+
+            let values_tensor = Tensor::f_from_slice(&values)
+                .unwrap()
+                .reshape(&[batch.len() as i64, 1])
+                .to_device(self.vs.device());
+
+            // 训练
+            let (total_loss, policy_loss, value_loss) =
+                self.train_batch(&boards_tensor, &policies_tensor, &values_tensor);
+
+            if (iter + 1) % 50 == 0 || iter == 0 {
+                println!(
+                    "  Iteration {}/{}: loss={:.4} (policy={:.4}, value={:.4})",
+                    iter + 1,
+                    num_iterations,
+                    total_loss,
+                    policy_loss,
+                    value_loss
+                );
+            }
+        }
+    }
+
+    /// 保存模型到文件
+    pub fn save_model(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        self.save(path)
     }
 }
 

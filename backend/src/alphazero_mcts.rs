@@ -7,8 +7,6 @@ use super::utils::*;
 use std::collections::HashMap;
 use tch::{Device, Kind, Tensor};
 
-type StateKey = String;
-
 /// AlphaZero MCTS 节点
 #[derive(Debug, Clone)]
 struct AlphaNode {
