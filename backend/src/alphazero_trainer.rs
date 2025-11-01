@@ -141,7 +141,7 @@ impl AlphaZeroPipeline {
         let mut game_states = Vec::new();
 
         // 游戏循环
-        for step in 0..300 {
+    for step in 0..300 {
             // MCTS 搜索
             let mut mcts = AlphaZeroMCTS::new(board.clone(), self.num_simulations);
             mcts.search(self.trainer.net(), current_player);
@@ -177,6 +177,14 @@ impl AlphaZeroPipeline {
                         policy,
                         value,
                     });
+                }
+                break;
+            }
+
+            // 平局：没有空位了
+            if board.empty_cells_count() == 0 {
+                for (board_vec, policy, _player) in game_states {
+                    samples.push(TrainingSample { board: board_vec, policy, value: 0.0 });
                 }
                 break;
             }

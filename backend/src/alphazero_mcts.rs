@@ -210,19 +210,21 @@ impl AlphaZeroMCTS {
         let root = &self.nodes[self.root_index];
 
         if temperature == 0.0 {
-            // 选择访问次数最多的
-            let mut best_move = (7, 7);
+            // 选择访问次数最多的；若无子节点，选择第一个空位
+            let mut best_move: Option<(usize, usize)> = None;
             let mut max_visits = 0;
 
             for (&mv, &child_idx) in &root.children {
                 let visits = self.nodes[child_idx].visit_count;
                 if visits > max_visits {
                     max_visits = visits;
-                    best_move = mv;
+                    best_move = Some(mv);
                 }
             }
 
-            best_move
+            if let Some(mv) = best_move { return mv; }
+            for i in 0..BOARD_HEIGHT { for j in 0..BOARD_WIDTH { if self.states[self.root_index].get(i as i32, j as i32) == Some(0) { return (i, j); } } }
+            return (0, 0);
         } else {
             // 根据访问次数的温度调整分布采样
             #[cfg(feature = "random")]

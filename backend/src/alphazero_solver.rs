@@ -1,6 +1,4 @@
-// AlphaZero Solver - 使用训练好的网络进行推理
 #![cfg(feature = "alphazero")]
-
 use super::alphazero_mcts::AlphaZeroMCTS;
 use super::alphazero_net::AlphaZeroNet;
 use super::board::Board;

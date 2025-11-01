@@ -235,10 +235,10 @@ impl AlphaZeroTrainer {
         // 前向传播
         let (policy_pred, value_pred) = self.net.forward(boards, true);
 
-        // 策略损失（交叉熵）
-        let policy_loss = -(policy_targets * &policy_pred)
-            .sum(tch::Kind::Float)
-            .mean(tch::Kind::Float);
+        // 策略损失（交叉熵）：逐样本 sum，再对 batch 求平均
+        // policy_pred 是对每个动作的 log_softmax
+        let per_sample_ce = -(&policy_targets * &policy_pred).sum_dim_intlist([1].as_ref(), false, tch::Kind::Float);
+        let policy_loss = per_sample_ce.mean(tch::Kind::Float);
 
         // 价值损失（MSE）
         let value_loss = (&value_pred - value_targets)

@@ -11,13 +11,9 @@ pub mod self_play;
 mod utils;
 
 // AlphaZero 相关模块（需要 alphazero feature）
-#[cfg(feature = "alphazero")]
 pub mod alphazero_mcts;
-#[cfg(feature = "alphazero")]
 pub mod alphazero_net;
-#[cfg(feature = "alphazero")]
 pub mod alphazero_solver;
-#[cfg(feature = "alphazero")]
 pub mod alphazero_trainer;
 
 #[wasm_bindgen]

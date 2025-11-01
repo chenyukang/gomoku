@@ -166,7 +166,6 @@ impl Board {
         }
 
         let win_len = if width >= 15 && height >= 15 { 5 } else { 4 };
-        eprintln!("board size: {}*{} win_len: {:?}", width, height, win_len);
 
         Self {
             width,

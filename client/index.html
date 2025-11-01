@@ -166,6 +166,12 @@
               </label>
             </div>
             <div class="form-check">
+              <input class="form-check-input" type="radio" name="algo_type" id="algo_alphazero" onclick="setAlgoType()">
+              <label class="form-check-label" for="algo_alphazero">
+                AlphaZero
+              </label>
+            </div>
+            <div class="form-check">
               <input class="form-check-input" type="radio" name="algo_type" id="algo_minimax" onclick="setAlgoType()">
               <label class="form-check-label" for="algo_minimax">
                 MiniMax
@@ -427,6 +433,8 @@
   function setAlgoType() {
     if (minimax.checked) {
       algo_type = "minimax";
+    } else if (document.getElementById('algo_alphazero').checked) {
+      algo_type = "alphazero";
     } else {
       algo_type = "monte_carlo";
     }
