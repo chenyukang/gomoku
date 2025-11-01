@@ -3,8 +3,9 @@
 
 use gomoku::alphazero_solver::AlphaZeroSolver;
 use gomoku::board::Board;
-use gomoku::minimax::Minimax;
+use gomoku::minimax::MiniMax;
 use gomoku::monte::MonteCarlo;
+use gomoku::algo::GomokuSolver;
 use std::io::{self, Write};
 
 fn main() {
@@ -46,13 +47,13 @@ fn main() {
     match choice {
         "1" => {
             println!("\n🎯 AlphaZero vs Monte Carlo");
-            let monte = MonteCarlo::new(1000);
-            play_game(&alphazero, OpponentType::Monte(monte));
+            // pass simulation count; MonteCarlo will be constructed per move
+            play_game(&alphazero, OpponentType::Monte(1000));
         }
         "2" => {
             println!("\n🎯 AlphaZero vs Minimax");
-            let minimax = Minimax::default();
-            play_game(&alphazero, OpponentType::Minimax(minimax));
+            // use Minimax solver via its trait implementation
+            play_game(&alphazero, OpponentType::Minimax);
         }
         "3" => {
             println!("\n🎯 AlphaZero 自我对弈");
@@ -65,8 +66,8 @@ fn main() {
 }
 
 enum OpponentType {
-    Monte(MonteCarlo),
-    Minimax(Minimax),
+    Monte(u32), // simulation count
+    Minimax,
 }
 
 fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
@@ -74,14 +75,14 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
     let mut current_player = 1u8;
     let mut move_count = 0;
 
-    println!("\n{'='*60}");
+    println!("\n{}", "=".repeat(60));
     println!("游戏开始！");
     println!("玩家1 (●): AlphaZero");
     println!(
         "玩家2 (○): {}",
         match opponent {
-            OpponentType::Monte(_) => "Monte Carlo",
-            OpponentType::Minimax(_) => "Minimax",
+                    OpponentType::Monte(_) => "Monte Carlo",
+                    OpponentType::Minimax => "Minimax",
         }
     );
     println!("{}\n", "=".repeat(60));
@@ -99,18 +100,18 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
                 "🎲 {} 思考中...",
                 match opponent {
                     OpponentType::Monte(_) => "Monte Carlo",
-                    OpponentType::Minimax(_) => "Minimax",
+                    OpponentType::Minimax => "Minimax",
                 }
             );
             match &opponent {
-                OpponentType::Monte(mc) => {
-                    let board_str = board.to_string();
-                    let mv = MonteCarlo::best_move(&board_str);
+                OpponentType::Monte(sim_count) => {
+                    let mut mc = MonteCarlo::new(board.clone(), current_player, *sim_count);
+                    let mv = mc.search_move();
                     Some((mv.x as i32, mv.y as i32))
                 }
-                OpponentType::Minimax(mm) => {
+                OpponentType::Minimax => {
                     let board_str = board.to_string();
-                    let mv = Minimax::best_move(&board_str);
+                    let mv = MiniMax::best_move(&board_str);
                     Some((mv.x as i32, mv.y as i32))
                 }
             }
@@ -125,7 +126,7 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
 
             // 检查胜负
             if let Some(winner) = board.any_winner() {
-                println!("\n{'='*60}");
+                println!("\n{}", "=".repeat(60));
                 if winner == 1 {
                     println!("🎉 AlphaZero 获胜!");
                 } else if winner == 2 {
@@ -133,7 +134,7 @@ fn play_game(alphazero: &AlphaZeroSolver, opponent: OpponentType) {
                         "🎉 {} 获胜!",
                         match opponent {
                             OpponentType::Monte(_) => "Monte Carlo",
-                            OpponentType::Minimax(_) => "Minimax",
+                            OpponentType::Minimax => "Minimax",
                         }
                     );
                 } else {
@@ -164,7 +165,7 @@ fn self_play(alphazero: &AlphaZeroSolver) {
     let mut current_player = 1u8;
     let mut move_count = 0;
 
-    println!("\n{'='*60}");
+    println!("\n{}", "=".repeat(60));
     println!("AlphaZero 自我对弈");
     println!("{}\n", "=".repeat(60));
 
@@ -184,7 +185,7 @@ fn self_play(alphazero: &AlphaZeroSolver) {
 
             // 检查胜负
             if let Some(winner) = board.any_winner() {
-                println!("\n{'='*60}");
+                println!("\n{}", "=".repeat(60));
                 if winner == 1 {
                     println!("🎉 玩家1 (●) 获胜!");
                 } else if winner == 2 {

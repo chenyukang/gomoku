@@ -223,6 +223,9 @@ impl AlphaZeroPipeline {
     pub fn train(&mut self, num_iterations: usize) {
         println!("🎓 Training for {} iterations...", num_iterations);
 
+        let mut best_loss = f64::INFINITY;
+        let mut loss_history = Vec::new();
+
         for iter in 0..num_iterations {
             if let Some(batch) = self.replay_buffer.sample_batch(self.config.batch_size) {
                 // 准备批次数据
@@ -232,41 +235,91 @@ impl AlphaZeroPipeline {
                 let (total_loss, policy_loss, value_loss) =
                     self.trainer.train_batch(&boards, &policies, &values);
 
+                // 记录 loss
+                loss_history.push(total_loss);
+                if total_loss < best_loss {
+                    best_loss = total_loss;
+                }
+
                 if iter % 100 == 0 {
+                    // 计算最近 100 次的平均 loss
+                    let recent_avg = if loss_history.len() >= 100 {
+                        loss_history[loss_history.len() - 100..].iter().sum::<f64>() / 100.0
+                    } else {
+                        loss_history.iter().sum::<f64>() / loss_history.len() as f64
+                    };
+
                     println!(
-                        "Iter {}/{}: Loss={:.4} (Policy={:.4}, Value={:.4})",
-                        iter, num_iterations, total_loss, policy_loss, value_loss
+                        "Iter {}/{}: Loss={:.4} (Policy={:.4}, Value={:.4}) | Avg={:.4}, Best={:.4}",
+                        iter, num_iterations, total_loss, policy_loss, value_loss, recent_avg, best_loss
                     );
                 }
             }
         }
 
+        // 训练完成统计
+        let final_avg = if loss_history.len() >= 100 {
+            loss_history[loss_history.len() - 100..].iter().sum::<f64>() / 100.0
+        } else {
+            loss_history.iter().sum::<f64>() / loss_history.len() as f64
+        };
+
         println!("✅ Training complete");
+        println!("   Final avg loss (last 100): {:.4}", final_avg);
+        println!("   Best loss: {:.4}", best_loss);
     }
 
-    /// 完整训练循环
+    /// 完整训练循环（改进版）
     pub fn train_loop(&mut self, num_iterations: usize) {
         println!("\n{}", "=".repeat(60));
-        println!("🚀 AlphaZero Training Pipeline");
+        println!("🚀 AlphaZero Training Pipeline (Improved)");
         println!("{}\n", "=".repeat(60));
 
+        println!("Configuration:");
+        println!("  Iterations: {}", num_iterations);
+        println!("  Games per iteration: {}", self.config.num_self_play_games);
+        println!(
+            "  Training iterations: {}",
+            self.config.num_training_iterations
+        );
+        println!("  MCTS simulations: {}", self.config.num_mcts_simulations);
+        println!("  Replay buffer size: {}", self.config.replay_buffer_size);
+        println!("  Current buffer samples: {}", self.replay_buffer.len());
+        println!();
+
         for iter in 0..num_iterations {
-            println!("\n--- Iteration {}/{} ---", iter + 1, num_iterations);
+            println!("\n{}", "=".repeat(60));
+            println!("📍 Iteration {}/{}", iter + 1, num_iterations);
+            println!("{}", "=".repeat(60));
 
-            // 自我对弈
+            // 🎮 自我对弈生成新数据（使用当前最新的网络）
+            println!("\n🎮 Phase 1: Self-Play");
             self.generate_self_play_data(self.config.num_self_play_games);
+            println!("   Buffer size: {} samples", self.replay_buffer.len());
 
-            // 训练
+            // 🎓 训练网络
+            println!("\n🎓 Phase 2: Training");
             self.train(self.config.num_training_iterations);
 
-            // 保存模型
-            if (iter + 1) % 10 == 0 {
+            // 💾 保存检查点
+            if (iter + 1) % 5 == 0 || iter == num_iterations - 1 {
                 let path = format!("data/alphazero_model_iter_{}.pt", iter + 1);
-                self.trainer.save(&path).ok();
+                println!("\n💾 Saving checkpoint: {}", path);
+                if let Err(e) = self.trainer.save(&path) {
+                    eprintln!("   ⚠️  Failed to save: {}", e);
+                } else {
+                    println!("   ✅ Model saved");
+                }
             }
+
+            println!("\n✅ Iteration {} complete", iter + 1);
         }
 
-        println!("\n🎉 Training pipeline complete!");
+        println!("\n{}", "=".repeat(60));
+        println!("🎉 Training pipeline complete!");
+        println!("   Total iterations: {}", num_iterations);
+        println!("   Final buffer size: {} samples", self.replay_buffer.len());
+        println!("{}", "=".repeat(60));
     }
 
     /// 将棋盘转换为向量

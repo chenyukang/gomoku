@@ -5,6 +5,7 @@ use gomoku::alphazero_solver::AlphaZeroSolver;
 use gomoku::board::Board;
 use gomoku::monte::MonteCarlo;
 use std::env;
+use yansi::Paint;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -104,7 +105,6 @@ fn main() {
 
                 board.place(x as usize, y as usize, current_player);
 
-                use yansi::Paint;
                 println!(
                     "  Move {}: {} (Player {}) -> ({}, {}) {}",
                     move_count,

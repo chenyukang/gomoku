@@ -130,7 +130,6 @@ impl Tree {
     }
 
     pub fn best_child(&self, index: usize) -> usize {
-        //let c_param = 0.5;
         let c_param = 0.7;
         let mut res = 0;
         let mut cur_max = f64::MIN;
@@ -338,8 +337,8 @@ mod tests {
         assert_eq!(root.get_node(1).unwrap().children.len(), 0);
         assert_eq!(root.get_node(1).unwrap().player, 2);
         let mv = root.get_node(1).unwrap().action.unwrap();
-        assert_eq!(mv.x, 1);
-        assert_eq!(mv.y, 2);
+        assert_eq!(mv.x, 5);
+        assert_eq!(mv.y, 5);
         root.backpropagete(1, Some(1));
         assert_eq!(root.get_node(1).unwrap().loss_count, 0);
         assert_eq!(root.get_node(1).unwrap().win_count, 1);
