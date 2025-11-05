@@ -7,6 +7,7 @@ use tch::{nn, Device};
 
 /// AlphaZero 求解器
 pub struct AlphaZeroSolver {
+    vs: nn::VarStore,
     net: AlphaZeroNet,
     num_simulations: u32,
     temperature: f32,
@@ -19,6 +20,7 @@ impl AlphaZeroSolver {
         let net = AlphaZeroNet::new(&vs.root(), num_filters, num_res_blocks);
 
         Self {
+            vs,
             net,
             num_simulations,
             temperature: 0.0, // 推理时使用确定性策略
@@ -38,6 +40,7 @@ impl AlphaZeroSolver {
         vs.load(path)?;
 
         Ok(Self {
+            vs,
             net,
             num_simulations,
             temperature: 0.0,

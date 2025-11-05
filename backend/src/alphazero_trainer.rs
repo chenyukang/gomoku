@@ -141,21 +141,24 @@ impl AlphaZeroPipeline {
         let mut game_states = Vec::new();
 
         // 游戏循环
-    for step in 0..300 {
+        for step in 0..300 {
             // MCTS 搜索
             let mut mcts = AlphaZeroMCTS::new(board.clone(), self.num_simulations);
             mcts.search(self.trainer.net(), current_player);
 
-            // 获取策略
-            let policy = mcts.get_policy();
+            // 获取策略（使用温度参数生成训练目标）
+            // 前30步使用 temperature=1.0 生成更多样化的目标
+            // 后续使用 temperature=1.0 保持一致（也可以用更小的值让目标更尖锐）
+            let policy_temperature = if step < 30 { 1.0 } else { 1.0 };
+            let policy = mcts.get_policy_with_temperature(policy_temperature);
 
             // 记录状态和策略
             let board_tensor = self.board_to_vec(&board, current_player);
             game_states.push((board_tensor, policy, current_player));
 
-            // 选择走法（温度调整）
-            let temperature = if step < 30 { self.temperature } else { 0.0 };
-            let (x, y) = mcts.select_move(temperature);
+            // 选择走法（使用温度调整采样）
+            let move_temperature = if step < 30 { self.temperature } else { 0.0 };
+            let (x, y) = mcts.select_move(move_temperature);
 
             // 执行走法
             board.place(x, y, current_player);
@@ -184,7 +187,11 @@ impl AlphaZeroPipeline {
             // 平局：没有空位了
             if board.empty_cells_count() == 0 {
                 for (board_vec, policy, _player) in game_states {
-                    samples.push(TrainingSample { board: board_vec, policy, value: 0.0 });
+                    samples.push(TrainingSample {
+                        board: board_vec,
+                        policy,
+                        value: 0.0,
+                    });
                 }
                 break;
             }
@@ -227,45 +234,73 @@ impl AlphaZeroPipeline {
         );
     }
 
-    /// 训练网络
+    /// 训练网络（带验证集和早停）
     pub fn train(&mut self, num_iterations: usize) {
         println!("🎓 Training for {} iterations...", num_iterations);
 
         let mut best_loss = f64::INFINITY;
         let mut loss_history = Vec::new();
+        let mut val_loss_history = Vec::new();
+        let mut no_improvement_count = 0;
+        let patience = 20; // 早停耐心值
 
         for iter in 0..num_iterations {
+            // 训练批次
             if let Some(batch) = self.replay_buffer.sample_batch(self.config.batch_size) {
-                // 准备批次数据
                 let (boards, policies, values) = self.prepare_batch(&batch);
-
-                // 训练
                 let (total_loss, policy_loss, value_loss) =
                     self.trainer.train_batch(&boards, &policies, &values);
 
-                // 记录 loss
                 loss_history.push(total_loss);
-                if total_loss < best_loss {
-                    best_loss = total_loss;
+
+                // 每10次迭代计算验证损失
+                if iter % 10 == 0 {
+                    if let Some(val_batch) = self
+                        .replay_buffer
+                        .sample_batch(self.config.batch_size.min(self.replay_buffer.len() / 5))
+                    {
+                        let (val_boards, val_policies, val_values) = self.prepare_batch(&val_batch);
+                        let val_loss =
+                            self.trainer
+                                .validate_batch(&val_boards, &val_policies, &val_values);
+                        val_loss_history.push(val_loss);
+
+                        // 早停检查
+                        if val_loss < best_loss {
+                            best_loss = val_loss;
+                            no_improvement_count = 0;
+                        } else {
+                            no_improvement_count += 1;
+                        }
+
+                        if no_improvement_count >= patience {
+                            println!("⚠️  Early stopping triggered at iteration {}", iter);
+                            break;
+                        }
+                    }
                 }
 
                 if iter % 100 == 0 {
-                    // 计算最近 100 次的平均 loss
                     let recent_avg = if loss_history.len() >= 100 {
                         loss_history[loss_history.len() - 100..].iter().sum::<f64>() / 100.0
                     } else {
                         loss_history.iter().sum::<f64>() / loss_history.len() as f64
                     };
 
+                    let val_info = if !val_loss_history.is_empty() {
+                        format!(", Val={:.4}", val_loss_history.last().unwrap())
+                    } else {
+                        String::new()
+                    };
+
                     println!(
-                        "Iter {}/{}: Loss={:.4} (Policy={:.4}, Value={:.4}) | Avg={:.4}, Best={:.4}",
-                        iter, num_iterations, total_loss, policy_loss, value_loss, recent_avg, best_loss
+                        "Iter {}/{}: Loss={:.4} (Policy={:.4}, Value={:.4}) | Avg={:.4}, Best={:.4}{}",
+                        iter, num_iterations, total_loss, policy_loss, value_loss, recent_avg, best_loss, val_info
                     );
                 }
             }
         }
 
-        // 训练完成统计
         let final_avg = if loss_history.len() >= 100 {
             loss_history[loss_history.len() - 100..].iter().sum::<f64>() / 100.0
         } else {
@@ -274,7 +309,7 @@ impl AlphaZeroPipeline {
 
         println!("✅ Training complete");
         println!("   Final avg loss (last 100): {:.4}", final_avg);
-        println!("   Best loss: {:.4}", best_loss);
+        println!("   Best val loss: {:.4}", best_loss);
     }
 
     /// 完整训练循环（改进版）
@@ -359,18 +394,47 @@ impl AlphaZeroPipeline {
         vec
     }
 
-    /// 准备训练批次
+    /// 准备训练批次（带数据增强）
     fn prepare_batch(&self, samples: &[TrainingSample]) -> (Tensor, Tensor, Tensor) {
         let batch_size = samples.len();
-
         let flat = BOARD_WIDTH * BOARD_HEIGHT;
+
         let mut boards_data = Vec::with_capacity(batch_size * 3 * flat);
         let mut policies_data = Vec::with_capacity(batch_size * flat);
         let mut values_data = Vec::with_capacity(batch_size);
 
+        #[cfg(feature = "random")]
+        use rand::Rng;
+
         for sample in samples {
-            boards_data.extend_from_slice(&sample.board);
-            policies_data.extend_from_slice(&sample.policy);
+            // 数据增强：50% 概率水平翻转（适用于 Connect4）
+            #[cfg(feature = "random")]
+            let should_flip = rand::thread_rng().gen_bool(0.5);
+            #[cfg(not(feature = "random"))]
+            let should_flip = false;
+
+            if should_flip {
+                // 翻转棋盘（3 个通道都翻转）
+                for ch in 0..3 {
+                    for i in 0..BOARD_HEIGHT {
+                        for j in 0..BOARD_WIDTH {
+                            let dst_j = BOARD_WIDTH - 1 - j;
+                            boards_data.push(sample.board[ch * flat + i * BOARD_WIDTH + dst_j]);
+                        }
+                    }
+                }
+                // 翻转策略
+                for i in 0..BOARD_HEIGHT {
+                    for j in 0..BOARD_WIDTH {
+                        let dst_j = BOARD_WIDTH - 1 - j;
+                        policies_data.push(sample.policy[i * BOARD_WIDTH + dst_j]);
+                    }
+                }
+            } else {
+                boards_data.extend_from_slice(&sample.board);
+                policies_data.extend_from_slice(&sample.policy);
+            }
+
             values_data.push(sample.value);
         }
 
@@ -380,7 +444,7 @@ impl AlphaZeroPipeline {
             BOARD_HEIGHT as i64,
             BOARD_WIDTH as i64,
         ]);
-        let policies = Tensor::from_slice(&policies_data).view([batch_size as i64, (flat) as i64]);
+        let policies = Tensor::from_slice(&policies_data).view([batch_size as i64, flat as i64]);
         let values = Tensor::from_slice(&values_data).view([batch_size as i64, 1]);
 
         (boards, policies, values)

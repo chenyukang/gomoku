@@ -35,7 +35,8 @@ fn main() {
     println!("Loading AlphaZero model: {}", model_path);
 
     // 加载 AlphaZero 模型
-    let alphazero = match AlphaZeroSolver::from_file(model_path, 32, 2, 100) {
+    // Match the training architecture defaults (128 filters, 6 blocks) and stronger MCTS sims
+    let alphazero = match AlphaZeroSolver::from_file(model_path, 128, 6, 200) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("❌ Failed to load model: {}", e);

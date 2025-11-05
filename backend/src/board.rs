@@ -675,9 +675,9 @@ impl Board {
     pub fn new_default() -> Board {
         let mut res = String::from("");
         for _ in 0..(BOARD_WIDTH * BOARD_HEIGHT) {
-            res = res + "0";
+            res.push('0');
         }
-        Board::from(res)
+        Board::new(res, BOARD_WIDTH, BOARD_HEIGHT)
     }
 }
 

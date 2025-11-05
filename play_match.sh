@@ -9,7 +9,7 @@ export DYLD_LIBRARY_PATH="$(python3 -c 'import torch; import os; print(os.path.d
 cd backend
 
 # 默认参数
-MODEL_PATH="../data/az_model.pt"
+MODEL_PATH="../data/az_strong_converted.pt"
 NUM_GAMES=10
 MC_SIMS=500
 

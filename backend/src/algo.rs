@@ -16,9 +16,12 @@ pub fn gomoku_solve(input: &str, algo_type: &str, width: usize, height: usize) -
             {
                 use crate::alphazero_solver::AdaptiveAlphaZeroSolver;
                 use std::path::Path;
-                let model_path = Path::new("../data/az_strong_converted.pt");
+                // 使用 best_model.pt 而不是特定代数的模型
+                let model_path = Path::new("../data/generations/gen_0004.pt");
                 if model_path.exists() {
-                    match AdaptiveAlphaZeroSolver::from_file(model_path, 32, 2, 10, 50) {
+                    // 参数必须与训练时一致：128 filters, 6 blocks
+                    // min_simulations: 50, max_simulations: 200 (自适应MCTS)
+                    match AdaptiveAlphaZeroSolver::from_file(model_path, 128, 6, 50, 200) {
                         Ok(solver) => {
                             let board = Board::new(input.to_string(), width, height);
                             let player = board.next_player();
@@ -28,8 +31,11 @@ pub fn gomoku_solve(input: &str, algo_type: &str, width: usize, height: usize) -
                                 panic!("AlphaZero solver failed to find a move");
                             }
                         }
-                        Err(_) => {
-                            panic!("Failed to load AlphaZero model from {:?}", model_path);
+                        Err(e) => {
+                            panic!(
+                                "Failed to load AlphaZero model from {:?} with err: {:?}",
+                                model_path, e
+                            );
                         }
                     }
                 } else {

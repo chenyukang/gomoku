@@ -46,18 +46,35 @@ fn main() {
 
     // 创建配置
     let config = AlphaZeroConfig {
-        num_filters: 32,
-        num_res_blocks: 2,
+        // Use stronger defaults more suitable for Connect4 training
+        num_filters: 128,
+        num_res_blocks: 6,
         learning_rate: 0.001,
-        batch_size: 32,
+        batch_size: 64,
         num_self_play_games: num_games,
         num_training_iterations: num_iterations,
         replay_buffer_size: 100000, // 增大缓冲区
-        num_mcts_simulations: 25,
+        num_mcts_simulations: 200,
         temperature: 1.0,
     };
 
     let mut pipeline = AlphaZeroPipeline::new(config);
+
+    // 如果模型文件已存在，加载它（用于继续训练）
+    if std::path::Path::new(model_path).exists() {
+        println!("📂 Loading existing model from {}...", model_path);
+        match pipeline.load_model(model_path) {
+            Ok(_) => println!("✅ Model loaded successfully! Continuing training...\n"),
+            Err(e) => {
+                eprintln!(
+                    "⚠️  Warning: Failed to load model ({}). Starting fresh training...\n",
+                    e
+                );
+            }
+        }
+    } else {
+        println!("📝 No existing model found. Starting fresh training...\n");
+    }
 
     // 使用改进的迭代训练循环
     pipeline.train_loop(num_epochs);

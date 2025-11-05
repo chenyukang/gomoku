@@ -237,7 +237,8 @@ impl AlphaZeroTrainer {
 
         // 策略损失（交叉熵）：逐样本 sum，再对 batch 求平均
         // policy_pred 是对每个动作的 log_softmax
-        let per_sample_ce = -(&policy_targets * &policy_pred).sum_dim_intlist([1].as_ref(), false, tch::Kind::Float);
+        let per_sample_ce =
+            -(policy_targets * &policy_pred).sum_dim_intlist([1].as_ref(), false, tch::Kind::Float);
         let policy_loss = per_sample_ce.mean(tch::Kind::Float);
 
         // 价值损失（MSE）
@@ -256,6 +257,32 @@ impl AlphaZeroTrainer {
             policy_loss.double_value(&[]),
             value_loss.double_value(&[]),
         )
+    }
+
+    /// 验证一个批次（不更新权重）
+    pub fn validate_batch(
+        &self,
+        boards: &Tensor,
+        policy_targets: &Tensor,
+        value_targets: &Tensor,
+    ) -> f64 {
+        tch::no_grad(|| {
+            let (policy_pred, value_pred) = self.net.forward(boards, false);
+
+            let per_sample_ce = -(policy_targets * &policy_pred).sum_dim_intlist(
+                [1].as_ref(),
+                false,
+                tch::Kind::Float,
+            );
+            let policy_loss = per_sample_ce.mean(tch::Kind::Float);
+
+            let value_loss = (&value_pred - value_targets)
+                .pow_tensor_scalar(2)
+                .mean(tch::Kind::Float);
+
+            let total_loss = &policy_loss + &value_loss;
+            total_loss.double_value(&[])
+        })
     }
 
     /// 获取网络引用
