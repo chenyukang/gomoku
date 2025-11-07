@@ -22,3 +22,15 @@ pub mod cfg {
         }
     }
 }
+
+// Board configuration defaults. Change these to switch between Gomoku (15x15, connect5)
+// and Connect4-style (6x7, connect4).
+pub const BOARD_WIDTH: usize = 15;
+pub const BOARD_HEIGHT: usize = 15;
+#[cfg(test)]
+pub const WIN_LEN: usize = 5;
+
+// pub const BOARD_WIDTH: usize = 7;
+// pub const BOARD_HEIGHT: usize = 6;
+// #[cfg(test)]
+// pub const WIN_LEN: usize = 4;

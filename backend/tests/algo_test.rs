@@ -1,4 +1,5 @@
 extern crate gomoku;
+use crate::utils::{BOARD_HEIGHT, BOARD_WIDTH};
 use glob::glob;
 use gomoku::*;
 use std::env;
@@ -15,10 +16,10 @@ fn run_from_data_dir(data_dir: &str, algo_type: &str) {
                 }
                 println!("Running Board Input: {}", input);
                 let content = fs::read_to_string(path).unwrap();
-                let mut board = board::Board::new(content.clone(), 15, 15);
+                let mut board = board::Board::new(content.clone(), BOARD_WIDTH, BOARD_HEIGHT);
                 board.print();
                 let player = board.next_player();
-                let mv = algo::gomoku_solve(content.as_str(), algo_type);
+                let mv = algo::gomoku_solve(content.as_str(), algo_type, BOARD_WIDTH, BOARD_HEIGHT);
                 println!("move: {:?}", mv);
                 let row = mv.x;
                 let col = mv.y;

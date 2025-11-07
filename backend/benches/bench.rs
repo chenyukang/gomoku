@@ -8,10 +8,10 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("gomoku-solve");
     group.significance_level(0.1).sample_size(10);
     group.bench_function("monte-solve", |b| {
-        b.iter(|| algo::gomoku_solve(content.as_str(), "monte_carlo"))
+        b.iter(|| algo::gomoku_solve(content.as_str(), "monte_carlo", 15, 15))
     });
     group.bench_function("minimax-solve", |b| {
-        b.iter(|| algo::gomoku_solve(content.as_str(), "minimax"))
+        b.iter(|| algo::gomoku_solve(content.as_str(), "minimax", 15, 15))
     });
     group.finish();
 }

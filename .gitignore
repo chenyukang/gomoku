@@ -1,2 +1,4 @@
 /backend/pkg
 *.out
+data
+*.json
