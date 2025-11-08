@@ -30,11 +30,24 @@ fn run_from_data_dir(data_dir: &str, algo_type: &str) {
                 println!("output: {}", output);
                 fs::write(input.replace(".in", ".out").as_str(), output.clone())
                     .expect("write error");
-                let cmp_content = fs::read_to_string(input.replace(".in", ".cmp"))
-                    .unwrap()
-                    .trim()
-                    .to_string();
-                assert_eq!(cmp_content, output);
+
+                // Read expected output(s) - can have multiple valid answers (one per line)
+                let cmp_content = fs::read_to_string(input.replace(".in", ".cmp")).unwrap();
+                let expected_outputs: Vec<&str> = cmp_content
+                    .lines()
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+
+                // Check if output matches any of the expected answers
+                if expected_outputs.contains(&output.as_str()) {
+                    println!("✓ Output matches expected result");
+                } else {
+                    panic!(
+                        "Output '{}' does not match any expected results: {:?}",
+                        output, expected_outputs
+                    );
+                }
             }
             Err(e) => println!("error:  {:?}", e),
         }
