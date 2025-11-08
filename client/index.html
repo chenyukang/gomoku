@@ -15,6 +15,48 @@
   <script src="assets/bootstrap.min.js"></script>
   <script async defer src="https://buttons.github.io/buttons.js"></script>
   <style>
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      transition: opacity 300ms ease-in-out;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-content {
+      text-align: center;
+    }
+
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #448aff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: #333;
+      font-weight: 500;
+    }
+
     /* Winner modal styles */
     .winner-overlay {
       position: fixed;
@@ -113,6 +155,15 @@
 </head>
 
 <body style="font-size: 12px; background-color: #fff;">
+  <!-- Loading Overlay -->
+  <div id="loading_overlay" class="loading-overlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading WASM...</div>
+      <div style="font-size: 12px; color: #666; margin-top: 10px;">Please wait</div>
+    </div>
+  </div>
+
   <div class="container-fluid" style="padding-top:10px;">
     <div class="row">
 
@@ -165,12 +216,12 @@
                 Monte Carlo
               </label>
             </div>
-            <div class="form-check">
+            <!-- <div class="form-check">
               <input class="form-check-input" type="radio" name="algo_type" id="algo_alphazero" onclick="setAlgoType()">
               <label class="form-check-label" for="algo_alphazero">
                 AlphaZero
               </label>
-            </div>
+            </div> -->
             <div class="form-check">
               <input class="form-check-input" type="radio" name="algo_type" id="algo_minimax" onclick="setAlgoType()">
               <label class="form-check-label" for="algo_minimax">
@@ -257,6 +308,7 @@
 
 <script>
   // Script: Game display control, input and message
+
   // Configurations
   var api_base_url = 'http://localhost:3000';
   var azure_url = "https://gomokuapp.azurewebsites.net";
@@ -310,6 +362,27 @@
   wasmWorker.onmessage = function (result) {
     processResponse(result.data);
   }
+
+  // Hide loading overlay when page and worker are ready
+  function hideLoadingOverlay() {
+    var overlay = document.getElementById('loading_overlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+      setTimeout(function() {
+        overlay.style.display = 'none';
+      }, 300);
+    }
+  }
+
+  // Wait for page to load, then hide overlay after a short delay
+  window.addEventListener('load', function() {
+    console.log('Page loaded, waiting for resources...');
+    // Give the worker a moment to initialize
+    setTimeout(function() {
+      console.log('Resources ready, hiding overlay');
+      hideLoadingOverlay();
+    }, 500);
+  });
 
   // Randomly select first player
   human_player = 1;

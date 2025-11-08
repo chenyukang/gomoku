@@ -7,16 +7,16 @@ import wasmInit, {
     gomoku_solve,
   } from "./pkg/gomoku.js";
 
-  wasmInit("./pkg/gomoku_bg.wasm");
+// Initialize WASM
+wasmInit("./pkg/gomoku_bg.wasm").then(() => {
+  console.log("WASM loaded successfully in main thread");
+});
 
-  export function solve_with_api(input, algo_type, width, height) {
-    // Instantiate our wasm module
+export function solve_with_api(input, algo_type, width, height) {
+  // Call our exported function
+  const result = gomoku_solve(input, algo_type, width, height);
 
-    // Call our exported function
-    const result = gomoku_solve(input, algo_type, width, height);
-
-    // Log the result to the console
-    //console.log(result);
-    return result;
-  }
-
+  // Log the result to the console
+  //console.log(result);
+  return result;
+}
