@@ -62,4 +62,4 @@ jobs:
       run: ./run.sh
 
     - name: Run tests
-      run: cd backend && cargo test --release --features "server"
+      run: cd backend && cargo test --release --features "server,random"
