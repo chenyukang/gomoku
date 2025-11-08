@@ -284,8 +284,6 @@ pub fn battle_monte() {
     board.place(7, 7, 1);
     //println!("board: {}", board.to_string());
     loop {
-        //let (_, row, col) = runner.run_heuristic(&mut board, opponent);
-        //println!("o row: {:?} col: {:?}", row, col);
         let mut monte = monte::MonteCarlo::new(board.clone(), opponent, 4000);
         let mv = monte.search_move();
         let row = mv.x;

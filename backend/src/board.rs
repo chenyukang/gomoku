@@ -165,7 +165,7 @@ impl Board {
             panic!("Width or height must larger than")
         }
 
-        let win_len = if width >= 15 && height >= 15 { 5 } else { 4 };
+        let win_len = 5;
 
         Self {
             width,
@@ -387,7 +387,6 @@ impl Board {
         }
     }
 
-    /// 获取棋盘上已下的棋子总数
     pub fn total_moves(&self) -> usize {
         let mut count = 0;
         for row in &self.cells {
@@ -454,7 +453,6 @@ impl Board {
             }
         }
 
-        // 如果是空棋盘，从中心区域开始
         let is_empty_board = row_min == self.height;
         if is_empty_board {
             row_min = self.height / 2 - 1;
@@ -471,7 +469,6 @@ impl Board {
         let mut undefended_step = -1;
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
-                // 对于空棋盘，不检查 is_remote_cell
                 if self.get(i as i32, j as i32) != Some(0)
                     || (!is_empty_board && self.is_remote_cell(i, j))
                 {
@@ -551,7 +548,6 @@ impl Board {
             }
         }
 
-        // 如果是空棋盘，从中心区域开始
         let is_empty_board = row_min == self.height;
         if is_empty_board {
             row_min = self.height / 2 - 1;
@@ -562,7 +558,6 @@ impl Board {
 
         for i in max(row_min as i32 - 1, 0) as usize..min(self.height, row_max + 2) {
             for j in max(col_min as i32 - 1, 0) as usize..min(self.width, col_max + 2) {
-                // 对于空棋盘，不检查 is_remote_cell
                 if self.get(i as i32, j as i32) != Some(0)
                     || (!is_empty_board && self.is_remote_cell(i, j))
                 {
@@ -581,7 +576,6 @@ impl Board {
     pub fn print(&self) {
         use yansi::Paint;
 
-        // 打印列标
         print!("    ");
         for j in 0..self.width {
             print!("{:X} ", j);
@@ -589,7 +583,6 @@ impl Board {
         println!();
 
         for i in 0..self.height {
-            // 打印行标
             print!("  {:X} ", i);
 
             for j in 0..self.width {
@@ -597,7 +590,6 @@ impl Board {
 
                 match self.cells[i][j] {
                     1 => {
-                        // 黑子 - 用 X (青色)
                         if last_placed {
                             print!("{} ", Paint::cyan("X").bg(Color::Red));
                         } else {
@@ -605,7 +597,6 @@ impl Board {
                         }
                     }
                     2 => {
-                        // 白子 - 用 O (黄色)
                         if last_placed {
                             print!("{} ", Paint::yellow("O").bg(Color::Red));
                         } else {
@@ -613,7 +604,6 @@ impl Board {
                         }
                     }
                     _ => {
-                        // 空位
                         print!("· ");
                     }
                 }
@@ -625,7 +615,6 @@ impl Board {
     pub fn print_debug(&self, moves: &Vec<Move>, score: &Vec<Vec<usize>>, best: &Move) {
         use yansi::Paint;
 
-        // 打印列标
         print!("      ");
         for j in 0..self.width {
             print!("{: ^6}", format!("{:X}", j));
@@ -633,7 +622,6 @@ impl Board {
         println!();
 
         for i in 0..self.height {
-            // 打印行标
             print!("  {:X}  ", i);
 
             for j in 0..self.width {

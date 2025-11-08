@@ -131,9 +131,15 @@ impl Tree {
 
     pub fn best_child(&self, index: usize) -> usize {
         let c_param = 0.7;
-        let mut res = 0;
-        let mut cur_max = f64::MIN;
         let node = &self.nodes[index];
+
+        if node.children.is_empty() {
+            return index;
+        }
+
+        let mut res = node.children[0];
+        let mut cur_max = f64::MIN;
+
         for i in 0..node.children.len() {
             let c = &self.nodes[node.children[i]];
             let r = (2.0 * node.n().ln() / c.n()).sqrt();

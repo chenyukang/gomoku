@@ -29,8 +29,3 @@ pub const BOARD_WIDTH: usize = 15;
 pub const BOARD_HEIGHT: usize = 15;
 #[cfg(test)]
 pub const WIN_LEN: usize = 5;
-
-// pub const BOARD_WIDTH: usize = 7;
-// pub const BOARD_HEIGHT: usize = 6;
-// #[cfg(test)]
-// pub const WIN_LEN: usize = 4;
