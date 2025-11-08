@@ -11,5 +11,11 @@ pushd backend
 export LIBTORCH_USE_PYTORCH=1
 export DYLD_LIBRARY_PATH="/Users/yukang/.local/share/mise/installs/python/3.13.3/lib/python3.13/site-packages/torch/lib:$DYLD_LIBRARY_PATH"
 cargo build --release --features "server,alphazero"
-./target/release/gomoku -s
+
+# Only start server if not in CI environment
+if [ -z "$CI" ] && [ -z "$GITHUB_ACTIONS" ]; then
+    ./target/release/gomoku -s
+else
+    echo "Running in CI environment, skipping server start"
+fi
 

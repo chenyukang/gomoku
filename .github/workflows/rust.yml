@@ -11,12 +11,10 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo install wasm-bindgen-cli wasm-pack && ./wasm.sh
+      run: cargo install wasm-bindgen-cli wasm-pack && ./run.sh
     - name: Run tests
       run: cd backend && cargo test --release --features "server"

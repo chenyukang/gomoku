@@ -2,25 +2,18 @@
 
 [![Build Status](https://github.com/chenyukang/gomoku/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/chenyukang/gomoku/actions/workflows/rust.yml)
 
-A Gomoku Web Applition to explore minimax algorithm with alpha-beta tunning,
-Azure Function, Rust and WebAssembly.
+A Gomoku Web Application to explore minimax algorithm with alpha-beta pruning,
+Monte Carlo Tree Search, Rust and WebAssembly.
 
-# Usage
-
-### Build server backend
+## Usage
 ```sh
 run.sh
 ```
 Open `http://localhost:3000` in browser and have fun.
 
-### Build WASM backend
+## Demos
 
-```sh
-cargo install wasm-bindgen-cli wasm-pack
-./wasm.sh
-```
-
-# [Demo](https://lemon-hill-0c2cac210.azurestaticapps.net/)
+- 🎮 [Play Online](https://gomoku-kappa.vercel.app/)
 
 ![demo](./client/assets/gomoku_demo.png)
 

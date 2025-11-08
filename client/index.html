@@ -186,14 +186,14 @@
           </div>
           <div id="panel_status" class="panel-body">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="backend_type" id="backend_localhost" checked
+              <input class="form-check-input" type="radio" name="backend_type" id="backend_localhost"
                 onclick="setBackendType()">
               <label class="form-check-label" for="backend_localhost">
                 Local Host
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="backend_type" id="backend_wasm"
+              <input class="form-check-input" type="radio" name="backend_type" id="backend_wasm" checked
                 onclick="setBackendType()">
               <label class="form-check-label" for="backend_wasm">
                 WASM
@@ -303,7 +303,7 @@
   var move_log;
   var undo_remaining;
   var algo_type = 'monte_carlo';
-  var backend_type = 'backend_localhost';
+  var backend_type = 'backend_wasm';
 
   var wasmWorker = new Worker('worker.js', {type: "module"});
 
