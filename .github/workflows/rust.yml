@@ -14,7 +14,52 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache cargo index
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+
+    - name: Cache cargo build
+      uses: actions/cache@v3
+      with:
+        path: backend/target
+        key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-
+
+    - name: Cache wasm-pack and wasm-bindgen
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/wasm-pack
+          ~/.cargo/bin/wasm-bindgen
+        key: ${{ runner.os }}-wasm-tools-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-wasm-tools-
+
+    - name: Install wasm tools
+      run: |
+        if ! command -v wasm-pack &> /dev/null; then
+          cargo install wasm-pack
+        fi
+        if ! command -v wasm-bindgen &> /dev/null; then
+          cargo install wasm-bindgen-cli
+        fi
+
     - name: Build
-      run: cargo install wasm-bindgen-cli wasm-pack && ./run.sh
+      run: ./run.sh
+
     - name: Run tests
       run: cd backend && cargo test --release --features "server"
