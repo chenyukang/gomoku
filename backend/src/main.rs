@@ -9,6 +9,13 @@ mod monte;
 mod server;
 mod utils;
 
+#[cfg(feature = "alphazero")]
+mod alphazero_solver;
+#[cfg(feature = "alphazero")]
+mod az_resnet;
+#[cfg(feature = "alphazero")]
+mod connect4;
+
 fn main() {
     let matches = clap_app!(myapp =>
         (version: "0.1")

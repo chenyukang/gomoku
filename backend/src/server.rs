@@ -29,6 +29,7 @@ pub async fn run_server(port: u16) {
         .and(opt_query)
         .map(|p: Option<ReqObject>| match p {
             Some(obj) => {
+                println!("📥 Received request: algo_type={}", obj.algo_type);
                 let width = obj.width.unwrap_or(BOARD_WIDTH);
                 let height = obj.height.unwrap_or(BOARD_HEIGHT);
                 for i in 0..height {
@@ -54,7 +55,7 @@ pub async fn run_server(port: u16) {
     // Combine API route and static files. API takes precedence.
     let handler = api_move.or(static_files);
 
-    println!("listen to : {} ...", port);
+    println!("listened to : {} ...", port);
     warp::serve(handler)
         .run((Ipv4Addr::UNSPECIFIED, port))
         .await

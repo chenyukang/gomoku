@@ -159,14 +159,14 @@
           </div>
           <div id="panel_status" class="panel-body">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="algo_type" id="algo_monte_carlo" checked
+              <input class="form-check-input" type="radio" name="algo_type" id="algo_monte_carlo"
                 onclick="setAlgoType()">
               <label class="form-check-label" for="algo_monte_carlo">
                 Monte Carlo
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="algo_type" id="algo_alphazero" onclick="setAlgoType()">
+              <input class="form-check-input" type="radio" name="algo_type" id="algo_alphazero" checked onclick="setAlgoType()">
               <label class="form-check-label" for="algo_alphazero">
                 AlphaZero
               </label>
@@ -295,15 +295,16 @@
 
   // Global game variables
   // Default board size (cols x rows). For Gomoku default is 15x15.
-  var BOARD_COLS = 15;
-  var BOARD_ROWS = 15;
+  var BOARD_COLS = 7;  // 默认使用 Connect4 棋盘
+  var BOARD_ROWS = 6;  // 默认使用 Connect4 棋盘
   var game_active;
   var current_board;
   var human_player, ai_player;
   var move_log;
   var undo_remaining;
-  var algo_type = 'monte_carlo';
-  var backend_type = 'backend_wasm';
+  var algo_type = 'alphazero';  // 默认使用 AlphaZero
+  var backend_type = 'backend_localhost';  // 默认使用 localhost，与 HTML checked 保持一致
+  var api_base_url = "http://localhost:3000";
 
   var wasmWorker = new Worker('worker.js', {type: "module"});
 
